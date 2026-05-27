@@ -153,3 +153,5 @@ userspace networking. From here the advanced track continues with **tc/BPF**
 (egress + full `sk_buff` access), **tail calls** (chaining programs to scale
 past the 1-million-instruction limit), and **LSM BPF** (kernel security-policy
 decisions) — the move from observing the system to governing it.
+
+➡️ [Chapter 18](18-tc.md) takes the next datapath step: tc/BPF, with egress.

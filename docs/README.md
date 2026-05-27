@@ -21,9 +21,11 @@ Every chapter is a variation on the same shape:
   launch), `openat` (ch9–10: every file open), and `connect` (ch11: every
   outbound connection) tracepoints, then the kernel *function* `tcp_set_state`
   (ch12–13: every TCP state change — our first **kprobe**), and finally a
-  *user-space* function, `bash:readline` (ch15: a **uprobe**). Kernel tracepoints,
-  kernel functions, and user-space functions all work; mostly only the `SEC()`
-  annotation and the attach call change.
+  *user-space* function, `bash:readline` (ch15: a **uprobe**). Beyond event
+  tracing, the same machinery hooks the **networking datapath** — **XDP** at the
+  NIC (ch17) and **tc/BPF** at the qdisc (ch18), which can act on packets, not
+  just observe. Kernel tracepoints, kernel/user functions, and the datapath all
+  work; mostly only the `SEC()` annotation and the attach call change.
 - **Bridge** — how kernel-side code hands data to user space: `bpf_trace_printk`
   → hash map → perf buffer → ring buffer. The bridge is where most of the
   early learning lives; from ch7 onward it stabilises on the ring buffer.
@@ -51,6 +53,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [15](15-bashreadline.md) | **uretprobe** `/usr/bin/bash:readline` | libbpf ring buffer | every interactive shell command, system-wide; first user-space attach (path+symbol); return value read with `probe_read_user_str` | needs a symbol/offset to locate the function; no view of what's *attached* |
 | [16](16-bpftool.md) | `sys_enter_openat` (per-UID counter) | hash map **pinned to bpffs** | operating eBPF with `bpftool`: list/show progs & maps, dump map by id or pinned path, view xlated bytecode; pinning for stable paths + persistence | all observability so far — nothing yet *acts on* the datapath |
 | [17](17-xdp.md) | **XDP** on a NIC (ingress) | per-CPU array | first datapath program: classify+count packets by protocol, always `XDP_PASS`; direct packet access with verifier bounds checks; generic vs native mode | only counts — the same hook can `DROP`/`REDIRECT`, and egress needs tc |
+| [18](18-tc.md) | **tc/BPF** ingress + egress (`clsact`) | per-CPU array | packets+bytes per direction — **egress** is the new reach; `struct __sk_buff` + `skb->len` for byte accounting; always `TC_ACT_OK` | still observing — `DROP`/`redirect` and policy enforcement remain |
 
 ## The running mystery (closed in Ch 5)
 
@@ -99,3 +102,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 15. [Uprobes (bashreadline)](15-bashreadline.md) — first user-space attach: uretprobe on `bash:readline` traces interactive commands system-wide; attach by path+symbol; reading a returned user string
 16. [The bpftool workflow](16-bpftool.md) — operating eBPF, not writing it: pin a map/prog to bpffs, then list/show/dump/inspect with `bpftool`; decoding raw map dumps; xlated bytecode
 17. [XDP](17-xdp.md) — first datapath program: per-protocol packet counter at the NIC (always `XDP_PASS`); direct packet access with bounds checks; per-CPU maps; generic vs native attach
+18. [tc/BPF](18-tc.md) — the egress-capable datapath hook: packets+bytes per direction via the `clsact` qdisc; `struct __sk_buff` and `skb->len`; always `TC_ACT_OK`

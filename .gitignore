@@ -17,6 +17,7 @@ vmlinux.h
 15-bashreadline/bashreadline
 16-bpftool/opencount
 17-xdp/xdpcount
+18-tc/tcstat
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/

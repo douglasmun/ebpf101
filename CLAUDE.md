@@ -43,6 +43,7 @@ their session, or ask them to paste the output back.
 | Ch 15 | C / libbpf (uprobe / bashreadline) | ✅ complete (verified live: traced interactive bash commands incl. a mistyped one) |
 | Ch 16 | C / libbpf (bpftool / pinning) | ✅ complete (verified live: pinned, inspected with bpftool; BTF-typed map dumps as decoded JSON) |
 | Ch 17 | C / libbpf (XDP, first datapath) | ✅ complete (verified live on wlp3s0; parses IPv4+IPv6 to L4; real ambient traffic is UDP/QUIC + ICMPv6 ND, TCP idle-0) |
+| Ch 18 | C / libbpf (tc/BPF, ingress+egress) | ✅ complete (verified live on wlp3s0: egress visible; 639KB in / 2.8KB out download asymmetry) |
 
 ## Machine constraints (verified, not assumed)
 
