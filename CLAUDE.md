@@ -1,0 +1,69 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+A learning repo working through the Isovalent "Learning eBPF" tutorial
+(Liz Rice's book), one chapter per numbered directory (`01-hello-world/`, ...).
+The goal is teaching, so code here is written to be read: keep examples small,
+heavily commented, and prefer clarity over cleverness.
+
+## Running examples
+
+eBPF programs must be loaded by a privileged process.
+
+**Chapters 1–6** (BCC / Python):
+```bash
+sudo python3 01-hello-world/hello.py
+```
+Loading a kprobe/printk example only shows output when the hooked event fires —
+e.g. the `execve` hello world prints nothing until some process runs a new
+program, so trigger it from a second terminal.
+
+**Chapters 7–11** (C / libbpf):
+```bash
+cd 07-libbpf && make          # build once, no sudo needed
+sudo ./07-libbpf/execsnoop    # load and run
+```
+
+Claude note: `sudo` on this machine requires a password, so Claude cannot load
+eBPF programs itself. Hand the `sudo …` command to the user to run via `!` in
+their session, or ask them to paste the output back.
+
+## Chapter status (as of 2026-05-27)
+
+| Range | Stack | Status |
+|-------|-------|--------|
+| Ch 1–6 | BCC / Python | ✅ complete |
+| Ch 7–11 | C / libbpf | ✅ complete |
+| Ch 12 | C / libbpf (first kprobe) | ✅ complete (verified on live IPv6 curl traffic) |
+| Ch 13 | C / libbpf (tcp_sock counters) | ✅ complete (verified live; comm-fix confirmed) |
+
+## Machine constraints (verified, not assumed)
+
+- Kernel 6.8 with BTF at `/sys/kernel/btf/vmlinux` → CO-RE works.
+- Installed: BCC (Python), bpftrace, bpftool, gcc, make.
+- Installed (added at ch7): clang 18, llvm, libbpf-dev, libelf-dev.
+- **Not installed**: `go` (needed for any future Go chapters).
+- `trace_pipe` (`/sys/kernel/debug/tracing/trace_pipe`) is root-only; BCC's
+  `trace_print()` locates it automatically when run under sudo.
+
+## libbpf chapter conventions (ch7+)
+
+Each C chapter follows a 4-file structure: `name.h`, `name.bpf.c`, `name.c`, `Makefile`.
+The Makefile has four steps: `vmlinux.h` → `.bpf.o` → `.skel.h` → binary.
+
+Common traps to check before declaring a chapter done:
+- `bpf_ringbuf_reserve` takes 3 args: `(map, size, flags)` — the trailing `, 0` is required.
+- Use `bpf_probe_read_user` for pointers from user space (syscall args); `bpf_probe_read_kernel` for kernel memory.
+- `O_*`, `AF_*`, and similar constants are preprocessor macros — **not in vmlinux.h**. Define them manually, with `#ifndef` guards in shared headers.
+- Key the stash map by full `bpf_get_current_pid_tgid()` (not just `>> 32`) when threads matter.
+- `ctx->args[0]` for `sys_enter_execve` is the kernel-verified `filename`, not `argv[0]`.
+- For kprobes (ch12+): use `BPF_KPROBE(name, args...)` for typed args, `BPF_CORE_READ()` for kernel struct fields (not `_user`/`_kernel` probe reads). Note TCP state values (`TCP_ESTABLISHED`…) *are* in vmlinux.h as an enum — don't redefine them (unlike `AF_*`/`O_*` macros, which aren't). At a `tcp_set_state` kprobe, `skc_state` is still the *old* state; `comm`/`pid` are only the connection owner on process-context transitions.
+- A `struct sock *` casts directly to `struct tcp_sock *` (sock is at offset 0 of the tcp_sock nesting), so `BPF_CORE_READ(tp, bytes_acked/bytes_received/srtt_us/total_retrans)` works. `srtt_us` is stored ×8 — right-shift by 3 for microseconds. To fix the softirq `comm` problem, stash pid/comm at `TCP_SYN_SENT` (process context) and reuse at `TCP_CLOSE` (the ch13 / tcplife pattern).
+
+When adding a new chapter, update:
+1. `README.md` — chapters table
+2. `docs/README.md` — progression table and numbered list
+3. `docs/NN-name.md` — new chapter notes
