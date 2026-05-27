@@ -39,6 +39,7 @@ their session, or ask them to paste the output back.
 | Ch 7–11 | C / libbpf | ✅ complete |
 | Ch 12 | C / libbpf (first kprobe) | ✅ complete (verified on live IPv6 curl traffic) |
 | Ch 13 | C / libbpf (tcp_sock counters) | ✅ complete (verified live; comm-fix confirmed) |
+| Ch 14 | C / libbpf (verifier/debugging) | ✅ complete (verified live: all 3 lessons reject then fix-loads; load-time demo, no attach) |
 
 ## Machine constraints (verified, not assumed)
 
@@ -54,6 +55,10 @@ their session, or ask them to paste the output back.
 Each C chapter follows a 4-file structure: `name.h`, `name.bpf.c`, `name.c`, `Makefile`.
 The Makefile has four steps: `vmlinux.h` → `.bpf.o` → `.skel.h` → binary.
 
+Exception: ch14 (`14-verifier/`) has **no `name.h`** — it's a load-time-only teaching
+chapter (nothing is attached, no kernel↔user shared struct), so the 3-file layout is
+intentional, not an omission.
+
 Common traps to check before declaring a chapter done:
 - `bpf_ringbuf_reserve` takes 3 args: `(map, size, flags)` — the trailing `, 0` is required.
 - Use `bpf_probe_read_user` for pointers from user space (syscall args); `bpf_probe_read_kernel` for kernel memory.
@@ -61,6 +66,7 @@ Common traps to check before declaring a chapter done:
 - Key the stash map by full `bpf_get_current_pid_tgid()` (not just `>> 32`) when threads matter.
 - `ctx->args[0]` for `sys_enter_execve` is the kernel-verified `filename`, not `argv[0]`.
 - For kprobes (ch12+): use `BPF_KPROBE(name, args...)` for typed args, `BPF_CORE_READ()` for kernel struct fields (not `_user`/`_kernel` probe reads). Note TCP state values (`TCP_ESTABLISHED`…) *are* in vmlinux.h as an enum — don't redefine them (unlike `AF_*`/`O_*` macros, which aren't). At a `tcp_set_state` kprobe, `skc_state` is still the *old* state; `comm`/`pid` are only the connection owner on process-context transitions.
+- The 512-byte BPF stack limit is enforced by **clang's BPF backend at compile time** (`error: Looks like the BPF stack limit is exceeded`), not just by the verifier — a too-big stack array never produces a `.bpf.o`. To demonstrate a *verifier-only* rejection use an unbounded array index, a NULL map-value deref, or an unbounded loop. Capture verifier logs programmatically via `bpf_object_open_opts.kernel_log_buf/size/level` + `bpf_program__set_autoload()` to isolate one program (ch14).
 - A `struct sock *` casts directly to `struct tcp_sock *` (sock is at offset 0 of the tcp_sock nesting), so `BPF_CORE_READ(tp, bytes_acked/bytes_received/srtt_us/total_retrans)` works. `srtt_us` is stored ×8 — right-shift by 3 for microseconds. To fix the softirq `comm` problem, stash pid/comm at `TCP_SYN_SENT` (process context) and reuse at `TCP_CLOSE` (the ch13 / tcplife pattern).
 
 When adding a new chapter, update:

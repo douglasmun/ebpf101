@@ -45,6 +45,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [11](11-connect.md) | `sys_enter/exit_connect` | libbpf hash map + ring buffer | every outbound TCP/UDP attempt; IP + port + outcome; `bpf_probe_read_user` for sockaddr | only the *attempt* — not whether/when it reached ESTABLISHED, nor its lifecycle |
 | [12](12-tcpstates.md) | **kprobe** `tcp_set_state` | libbpf LRU map + ring buffer | every TCP state transition; full 4-tuple via `BPF_CORE_READ` of `struct sock`; per-state duration + handshake latency | `comm` unreliable off process context; no bytes/throughput |
 | [13](13-tcplife.md) | same `tcp_set_state` kprobe | libbpf LRU maps + ring buffer | one summary per *closed* connection: bytes tx/rx, RTT, retransmits via `struct tcp_sock`; identity stashed at `SYN_SENT` (fixes ch12's `comm`) | only a postmortem — no live/real-time throughput |
+| [14](14-verifier.md) | — (load-time only) | none — nothing attached | *why loads fail*: NULL deref, unbounded loop, OOB index — each rejection + fix; verifier logs captured via `kernel_log_buf` + selective `set_autoload` | can debug rejections, but not inspect what's already loaded/running |
 
 ## The running mystery (closed in Ch 5)
 
@@ -89,3 +90,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 11. [connect (netsnoop)](11-connect.md) — network visibility: outbound TCP/UDP; `bpf_probe_read_user` for sockaddr; byte-order conversion in BPF
 12. [TCP states (tcpstates)](12-tcpstates.md) — first kprobe in C; `BPF_CORE_READ` of kernel `struct sock`; sock-keyed map for per-state durations and SYN→ESTABLISHED latency
 13. [TCP life (tcplife)](13-tcplife.md) — per-connection summary at close; read the larger `struct tcp_sock` (bytes/RTT/retransmits); stash identity at `SYN_SENT` to fix the softirq `comm` problem
+14. [The verifier & debugging](14-verifier.md) — deliberately-rejected programs (NULL deref, unbounded loop, OOB index) and their fixes; capturing verifier logs programmatically; clang vs. verifier as separate gates

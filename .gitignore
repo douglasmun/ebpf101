@@ -13,6 +13,7 @@ vmlinux.h
 11-connect/netsnoop
 12-tcpstates/tcpstates
 13-tcplife/tcplife
+14-verifier/verifier
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/

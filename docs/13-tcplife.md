@@ -149,3 +149,6 @@ top talkers right now, or watch retransmits climb in real time. That is the
 `tcp_sendmsg`/`tcp_cleanup_rbuf`, or a timer) and diff them per interval. Same
 structs, same CO-RE reads — the new ingredient is *sampling over time* rather
 than *waiting for an end event*.
+
+➡️ The series then turns from *building tools* to *understanding the platform*:
+[Chapter 14](14-verifier.md) meets the verifier head-on.
