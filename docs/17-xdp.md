@@ -107,10 +107,7 @@ This is a more honest — and more *current* — picture than "TCP dominates":
 
 - **UDP dominates (97), TCP is 0.** Ambient traffic in the QUIC era is mostly
   UDP: **HTTP/3 / QUIC** (UDP 443), DNS, mDNS, NTP. Plain TCP only appears when
-  something opens a TCP connection; an idle desktop barely does. (Generate one —
-  `curl https://github.com` in another terminal — and the `TCP` row jumps
-  immediately, via IPv6 on this host, which is what the new `ip6->nexthdr` parse
-  is for.)
+  something opens a TCP connection; an idle desktop barely does.
 - **`ICMP: 5` is essentially ICMPv6 Neighbor Discovery**, and that's also why
   **`ARP: 4` is tiny** — IPv6 replaces ARP with ND (over ICMPv6), so an
   IPv6-first network does almost no ARP.
@@ -118,11 +115,31 @@ This is a more honest — and more *current* — picture than "TCP dominates":
   (hop-by-hop for multicast/RA, etc.) rather than L4 directly — we stop at the
   first next-header and don't walk the chain (the remaining exercise).
 
+Now make a TCP connection — `curl https://github.com` in another terminal — and
+re-capture:
+
+```
+PROTO               PACKETS
+other                     0
+TCP                     525
+UDP                     361
+ICMP                     22
+IPv4-other                4
+IPv6-other               61
+ARP                      41
+```
+
+**`TCP` jumps from 0 to 525** — the response and ACK packets of that connection.
+On this IPv6-first host that TCP arrives over IPv6, so it is the new
+`ip6->nexthdr` switch (not the IPv4 path) that catches it: direct proof the
+IPv6 L4 parse works. Everything else climbs too as the browser stays busy.
+
 > **Before/after of the IPv6 parse.** An earlier version stopped at the ethertype
 > and dumped *all* IPv6 into one bucket; on this host that single bucket swallowed
-> everything and the L4 columns read zero. Parsing `nexthdr` split it apart — and
-> the split revealed the ambient mix is UDP + ICMPv6, not TCP. Sometimes the
-> finer measurement changes the conclusion.
+> everything and the L4 columns read zero. Parsing `nexthdr` split it apart — the
+> idle mix turned out to be UDP + ICMPv6 (not TCP), and a deliberate `curl` lights
+> the `TCP` row up over IPv6. Sometimes the finer measurement changes the
+> conclusion.
 
 Totals grow each second, and traffic flows the whole time because every verdict
 is `XDP_PASS`.
