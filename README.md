@@ -28,6 +28,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `16-bpftool/` | operating eBPF: a per-UID `openat` counter **pinned** to `/sys/fs/bpf`, then inspected/dumped with `bpftool` (prog/map show, dump by id & pinned path, xlated) | C / libbpf | ✅ built |
 | `17-xdp/` | first **datapath** program: XDP packet counter per protocol (always `XDP_PASS`, never drops); direct packet access + verifier bounds checks; per-CPU array; attach to a NIC | C / libbpf | ✅ built |
 | `18-tc/` | **tc/BPF**: count packets+bytes on **ingress AND egress** (egress is new vs XDP) via the `clsact` qdisc; `struct __sk_buff` + `skb->len`; always `TC_ACT_OK` | C / libbpf | ✅ built |
+| `19-tailcall/` | **tail calls**: an `execve` dispatcher jumps via a `PROG_ARRAY` to a user/root handler; `bpf_tail_call` never returns; jump table wired from userspace | C / libbpf | ✅ built |
 
 ## Running an example
 

@@ -54,6 +54,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [16](16-bpftool.md) | `sys_enter_openat` (per-UID counter) | hash map **pinned to bpffs** | operating eBPF with `bpftool`: list/show progs & maps, dump map by id or pinned path, view xlated bytecode; pinning for stable paths + persistence | all observability so far — nothing yet *acts on* the datapath |
 | [17](17-xdp.md) | **XDP** on a NIC (ingress) | per-CPU array | first datapath program: classify+count packets by protocol, always `XDP_PASS`; direct packet access with verifier bounds checks; generic vs native mode | only counts — the same hook can `DROP`/`REDIRECT`, and egress needs tc |
 | [18](18-tc.md) | **tc/BPF** ingress + egress (`clsact`) | per-CPU array | packets+bytes per direction — **egress** is the new reach; `struct __sk_buff` + `skb->len` for byte accounting; always `TC_ACT_OK` | still observing — `DROP`/`redirect` and policy enforcement remain |
+| [19](19-tailcall.md) | `sys_enter_execve` → tail call | `PROG_ARRAY` + array | program-to-program dispatch: `bpf_tail_call` jumps to a user/root handler and never returns; jump table populated from userspace | observes/routes but doesn't *enforce* — LSM is the policy step |
 
 ## The running mystery (closed in Ch 5)
 
@@ -103,3 +104,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 16. [The bpftool workflow](16-bpftool.md) — operating eBPF, not writing it: pin a map/prog to bpffs, then list/show/dump/inspect with `bpftool`; decoding raw map dumps; xlated bytecode
 17. [XDP](17-xdp.md) — first datapath program: per-protocol packet counter at the NIC (always `XDP_PASS`); direct packet access with bounds checks; per-CPU maps; generic vs native attach
 18. [tc/BPF](18-tc.md) — the egress-capable datapath hook: packets+bytes per direction via the `clsact` qdisc; `struct __sk_buff` and `skb->len`; always `TC_ACT_OK`
+19. [Tail calls](19-tailcall.md) — program-to-program dispatch via a `PROG_ARRAY` jump table; `bpf_tail_call` never returns; wiring the table from userspace and attaching only the entry program

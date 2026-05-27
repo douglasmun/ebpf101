@@ -18,6 +18,7 @@ vmlinux.h
 16-bpftool/opencount
 17-xdp/xdpcount
 18-tc/tcstat
+19-tailcall/tailcall
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/
