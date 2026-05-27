@@ -40,6 +40,7 @@ their session, or ask them to paste the output back.
 | Ch 12 | C / libbpf (first kprobe) | ✅ complete (verified on live IPv6 curl traffic) |
 | Ch 13 | C / libbpf (tcp_sock counters) | ✅ complete (verified live; comm-fix confirmed) |
 | Ch 14 | C / libbpf (verifier/debugging) | ✅ complete (verified live: all 3 lessons reject then fix-loads; load-time demo, no attach) |
+| Ch 15 | C / libbpf (uprobe / bashreadline) | ✅ complete (verified live: traced interactive bash commands incl. a mistyped one) |
 
 ## Machine constraints (verified, not assumed)
 

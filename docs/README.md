@@ -20,8 +20,10 @@ Every chapter is a variation on the same shape:
 - **Hook** — where your code runs. We used the `execve` (ch1–8: every program
   launch), `openat` (ch9–10: every file open), and `connect` (ch11: every
   outbound connection) tracepoints, then the kernel *function* `tcp_set_state`
-  (ch12–13: every TCP state change — our first **kprobe**). Any kernel tracepoint
-  or function works; only the `SEC()` annotation changes.
+  (ch12–13: every TCP state change — our first **kprobe**), and finally a
+  *user-space* function, `bash:readline` (ch15: a **uprobe**). Kernel tracepoints,
+  kernel functions, and user-space functions all work; mostly only the `SEC()`
+  annotation and the attach call change.
 - **Bridge** — how kernel-side code hands data to user space: `bpf_trace_printk`
   → hash map → perf buffer → ring buffer. The bridge is where most of the
   early learning lives; from ch7 onward it stabilises on the ring buffer.
@@ -46,6 +48,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [12](12-tcpstates.md) | **kprobe** `tcp_set_state` | libbpf LRU map + ring buffer | every TCP state transition; full 4-tuple via `BPF_CORE_READ` of `struct sock`; per-state duration + handshake latency | `comm` unreliable off process context; no bytes/throughput |
 | [13](13-tcplife.md) | same `tcp_set_state` kprobe | libbpf LRU maps + ring buffer | one summary per *closed* connection: bytes tx/rx, RTT, retransmits via `struct tcp_sock`; identity stashed at `SYN_SENT` (fixes ch12's `comm`) | only a postmortem — no live/real-time throughput |
 | [14](14-verifier.md) | — (load-time only) | none — nothing attached | *why loads fail*: NULL deref, unbounded loop, OOB index — each rejection + fix; verifier logs captured via `kernel_log_buf` + selective `set_autoload` | can debug rejections, but not inspect what's already loaded/running |
+| [15](15-bashreadline.md) | **uretprobe** `/usr/bin/bash:readline` | libbpf ring buffer | every interactive shell command, system-wide; first user-space attach (path+symbol); return value read with `probe_read_user_str` | needs a symbol/offset to locate the function; no view of what's *attached* |
 
 ## The running mystery (closed in Ch 5)
 
@@ -91,3 +94,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 12. [TCP states (tcpstates)](12-tcpstates.md) — first kprobe in C; `BPF_CORE_READ` of kernel `struct sock`; sock-keyed map for per-state durations and SYN→ESTABLISHED latency
 13. [TCP life (tcplife)](13-tcplife.md) — per-connection summary at close; read the larger `struct tcp_sock` (bytes/RTT/retransmits); stash identity at `SYN_SENT` to fix the softirq `comm` problem
 14. [The verifier & debugging](14-verifier.md) — deliberately-rejected programs (NULL deref, unbounded loop, OOB index) and their fixes; capturing verifier logs programmatically; clang vs. verifier as separate gates
+15. [Uprobes (bashreadline)](15-bashreadline.md) — first user-space attach: uretprobe on `bash:readline` traces interactive commands system-wide; attach by path+symbol; reading a returned user string

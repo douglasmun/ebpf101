@@ -203,6 +203,8 @@ few lines** carry the reason. Practical habits:
 We can now get *past* the verifier and reason about why a load fails. The
 complementary skill is inspecting what is *already* loaded and running — listing
 programs and maps, dumping map contents, following pinned objects — which is the
-**`bpftool` workflow** (a natural next chapter). And every probe so far has been
+**`bpftool` workflow** (a later chapter). And every probe so far has been
 kernel-side; **uprobes** would add userspace function tracing (libc, OpenSSL,
 a shell's `readline`), the other major attach point we haven't touched.
+
+➡️ We take the uprobe step first: [Chapter 15](15-bashreadline.md).
