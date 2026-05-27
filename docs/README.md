@@ -50,6 +50,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [14](14-verifier.md) | — (load-time only) | none — nothing attached | *why loads fail*: NULL deref, unbounded loop, OOB index — each rejection + fix; verifier logs captured via `kernel_log_buf` + selective `set_autoload` | can debug rejections, but not inspect what's already loaded/running |
 | [15](15-bashreadline.md) | **uretprobe** `/usr/bin/bash:readline` | libbpf ring buffer | every interactive shell command, system-wide; first user-space attach (path+symbol); return value read with `probe_read_user_str` | needs a symbol/offset to locate the function; no view of what's *attached* |
 | [16](16-bpftool.md) | `sys_enter_openat` (per-UID counter) | hash map **pinned to bpffs** | operating eBPF with `bpftool`: list/show progs & maps, dump map by id or pinned path, view xlated bytecode; pinning for stable paths + persistence | all observability so far — nothing yet *acts on* the datapath |
+| [17](17-xdp.md) | **XDP** on a NIC (ingress) | per-CPU array | first datapath program: classify+count packets by protocol, always `XDP_PASS`; direct packet access with verifier bounds checks; generic vs native mode | only counts — the same hook can `DROP`/`REDIRECT`, and egress needs tc |
 
 ## The running mystery (closed in Ch 5)
 
@@ -97,3 +98,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 14. [The verifier & debugging](14-verifier.md) — deliberately-rejected programs (NULL deref, unbounded loop, OOB index) and their fixes; capturing verifier logs programmatically; clang vs. verifier as separate gates
 15. [Uprobes (bashreadline)](15-bashreadline.md) — first user-space attach: uretprobe on `bash:readline` traces interactive commands system-wide; attach by path+symbol; reading a returned user string
 16. [The bpftool workflow](16-bpftool.md) — operating eBPF, not writing it: pin a map/prog to bpffs, then list/show/dump/inspect with `bpftool`; decoding raw map dumps; xlated bytecode
+17. [XDP](17-xdp.md) — first datapath program: per-protocol packet counter at the NIC (always `XDP_PASS`); direct packet access with bounds checks; per-CPU maps; generic vs native attach

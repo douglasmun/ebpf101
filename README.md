@@ -26,6 +26,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `14-verifier/` | the verifier as a gate: programs that fail to load (NULL deref, unbounded loop, OOB index) + their fixes; capture verifier logs via `kernel_log_buf` + selective `set_autoload` | C / libbpf | ✅ built |
 | `15-bashreadline/` | first **uprobe**: uretprobe on `/usr/bin/bash:readline` to trace every interactive shell command system-wide; manual uprobe attach by path+symbol; `bpf_ringbuf_discard` | C / libbpf | ✅ built |
 | `16-bpftool/` | operating eBPF: a per-UID `openat` counter **pinned** to `/sys/fs/bpf`, then inspected/dumped with `bpftool` (prog/map show, dump by id & pinned path, xlated) | C / libbpf | ✅ built |
+| `17-xdp/` | first **datapath** program: XDP packet counter per protocol (always `XDP_PASS`, never drops); direct packet access + verifier bounds checks; per-CPU array; attach to a NIC | C / libbpf | ✅ built |
 
 ## Running an example
 

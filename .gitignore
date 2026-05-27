@@ -16,6 +16,7 @@ vmlinux.h
 14-verifier/verifier
 15-bashreadline/bashreadline
 16-bpftool/opencount
+17-xdp/xdpcount
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/

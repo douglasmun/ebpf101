@@ -163,3 +163,5 @@ been **observability** — watching events. The remaining frontier is eBPF that
 before the kernel network stack), **tc/BPF** (shaping and filtering), **tail
 calls** (chaining programs to scale past the instruction limit), and **LSM BPF**
 (security policy decisions). Those move eBPF from *seeing* to *deciding*.
+
+➡️ [Chapter 17](17-xdp.md) takes the first datapath step with XDP.
