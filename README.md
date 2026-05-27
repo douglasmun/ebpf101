@@ -31,6 +31,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `19-tailcall/` | **tail calls**: an `execve` dispatcher jumps via a `PROG_ARRAY` to a user/root handler; `bpf_tail_call` never returns; jump table wired from userspace | C / libbpf | ✅ built |
 | `20-lsm/` | **LSM BPF**: hook `bprm_check_security`; the return value is an allow/deny **verdict** (audits + always allows); needs `bpf` in the kernel `lsm=` list | C / libbpf | 🔨 built\* |
 | `21-firewall/` | **XDP firewall**: parse to L4 and `XDP_DROP` blocked TCP/UDP ports; rules live in a userspace-filled `blocklist` map (runtime-configurable); safe defaults (`lo` 11111) | C / libbpf | ✅ built |
+| `22-iterator/` | **BPF iterator**: a "pull" program — walk every `task_struct` and print it (a mini `ps`) via `bpf_seq_printf`; `attach_iter` → `bpf_iter_create` → `read()` | C / libbpf | ✅ built |
 
 \* Ch1–19 are built **and** run live. Ch20 builds and its prerequisite-check runs,
 but the LSM hook can't attach until `bpf` is added to the kernel `lsm=` boot

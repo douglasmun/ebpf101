@@ -49,6 +49,17 @@ Enable it (CONFIG_BPF_LSM is already =y, so only a boot param + reboot):
 Then re-run this program.
 ```
 
+A helper script does step 1 safely — it reads your *current* LSM list (so it
+preserves every active module), appends `bpf`, backs up `/etc/default/grub`, runs
+`update-grub`, and is idempotent:
+
+```
+sudo bash 20-lsm/enable-bpf-lsm.sh   # then: sudo reboot
+```
+
+It writes the parameter to `GRUB_CMDLINE_LINUX_DEFAULT`, so booting **recovery
+mode** still comes up without `bpf` — a clean fallback if anything misbehaves.
+
 > **Status note.** Because `bpf` is not in this kernel's active LSM list, the
 > exec-audit path below is **not yet live-verified on this machine** — it needs
 > the boot-param change and a reboot. The prerequisite detection above *is*

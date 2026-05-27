@@ -118,3 +118,6 @@ A few natural steps from here, each a small change:
 - **Beyond drop** — `XDP_TX` to bounce a packet back, or `XDP_REDIRECT` to steer
   it to another NIC/CPU/socket: the building block of XDP load balancers and
   AF_XDP. Same hook, richer verdict.
+
+➡️ [Chapter 22](22-iterator.md) turns to the last model we haven't seen — BPF
+iterators, which you *pull* by reading.

@@ -25,7 +25,9 @@ Every chapter is a variation on the same shape:
   tracing, the same machinery hooks the **networking datapath** — **XDP** at the
   NIC (ch17) and **tc/BPF** at the qdisc (ch18), which can act on packets, not
   just observe. Kernel tracepoints, kernel/user functions, and the datapath all
-  work; mostly only the `SEC()` annotation and the attach call change.
+  work; mostly only the `SEC()` annotation and the attach call change. (ch22 adds
+  a different model entirely — an **iterator**, which the kernel runs when you
+  *read* it, walking one of its structures rather than firing on an event.)
 - **Bridge** — how kernel-side code hands data to user space: `bpf_trace_printk`
   → hash map → perf buffer → ring buffer. The bridge is where most of the
   early learning lives; from ch7 onward it stabilises on the ring buffer.
@@ -57,6 +59,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [19](19-tailcall.md) | `sys_enter_execve` → tail call | `PROG_ARRAY` + array | program-to-program dispatch: `bpf_tail_call` jumps to a user/root handler and never returns; jump table populated from userspace | observes/routes but doesn't *enforce* — LSM is the policy step |
 | [20](20-lsm.md) | **LSM** `bprm_check_security` | ring buffer | the **return value is a verdict** (allow/deny) — audits exec and always allows; the one program type whose output changes what the kernel does | the end: from `printk("hello")` to a verdict the kernel obeys |
 | [21](21-firewall.md) | **XDP** + action | hash `blocklist` map | applied capstone: an XDP firewall that **`XDP_DROP`s** blocked TCP/UDP ports, with rules set live from user space (the Meta-style map-driven design) | drops by port — source/CIDR/IPv6 and `TX`/`REDIRECT` are extensions |
+| [22](22-iterator.md) | **BPF iterator** `iter/task` | seq_file (read) | a *pull*, not a push: walk every `task_struct` and print it (mini `ps`) via `bpf_seq_printf`; `attach_iter`→`bpf_iter_create`→`read()` | snapshot of one structure — other iters (`tcp`, `bpf_map_elem`, `task_file`) extend it |
 
 ## The running mystery (closed in Ch 5)
 
@@ -109,3 +112,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 19. [Tail calls](19-tailcall.md) — program-to-program dispatch via a `PROG_ARRAY` jump table; `bpf_tail_call` never returns; wiring the table from userspace and attaching only the entry program
 20. [LSM BPF](20-lsm.md) — eBPF as policy: hook a Linux Security Module check (`bprm_check_security`) where the return value is an allow/deny verdict; audit-only (always allows), with the prerequisite (`bpf` in `lsm=`) and the deny line both spelled out
 21. [XDP firewall](21-firewall.md) — applied capstone: an XDP program that `XDP_DROP`s blocked TCP/UDP ports, with the rules set live from user space via a `blocklist` map (the production, Meta-style design)
+22. [BPF iterators](22-iterator.md) — the pull model: walk a kernel structure (every `task_struct`) and print it with `bpf_seq_printf`, read on demand — a mini `ps`; `attach_iter` → `bpf_iter_create` → `read()`

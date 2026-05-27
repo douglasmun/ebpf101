@@ -45,8 +45,9 @@ their session, or ask them to paste the output back.
 | Ch 17 | C / libbpf (XDP, first datapath) | ✅ complete (verified live on wlp3s0; parses IPv4+IPv6 to L4; real ambient traffic is UDP/QUIC + ICMPv6 ND, TCP idle-0) |
 | Ch 18 | C / libbpf (tc/BPF, ingress+egress) | ✅ complete (verified live on wlp3s0: egress visible; 639KB in / 2.8KB out download asymmetry) |
 | Ch 19 | C / libbpf (tail calls / PROG_ARRAY) | ✅ complete (verified live: ls/echo/sudo → user 2, root 1, miss 0; echo builtin = no execve; sudo's setuid transition visible) |
-| Ch 20 | C / libbpf (LSM BPF, verdict) | 🔨 built; prereq-detection verified, but exec-audit NOT live-verified — `bpf` not in this kernel's active `lsm=` (needs GRUB edit + reboot) |
+| Ch 20 | C / libbpf (LSM BPF, verdict) | 🔨 built; `bpf` now enabled in GRUB `lsm=` (helper `20-lsm/enable-bpf-lsm.sh`), reboot pending to live-verify exec-audit |
 | Ch 21 | C / libbpf (XDP firewall, XDP_DROP) | ✅ complete (verified live: 6 drops on lo:11111). Confirmed lo HAS an eth header → fixed ch17's wrong claim. From the Columbia lecture PDF. |
+| Ch 22 | C / libbpf (BPF iterator, iter/task) | ✅ complete (verified live: dumped ~600 tasks; threading visible — firefox/claude fan out; tool saw itself). Covers the PDF's "iterators". |
 
 ## Machine constraints (verified, not assumed)
 
@@ -62,9 +63,10 @@ their session, or ask them to paste the output back.
 Each C chapter follows a 4-file structure: `name.h`, `name.bpf.c`, `name.c`, `Makefile`.
 The Makefile has four steps: `vmlinux.h` → `.bpf.o` → `.skel.h` → binary.
 
-Exception: ch14 (`14-verifier/`) and ch16 (`16-bpftool/`) have **no `name.h`** — they
-have no kernel↔user shared struct (ch14 attaches nothing; ch16's map is read by
-bpftool, not by user space), so the 3-file layout is intentional, not an omission.
+Exception: ch14 (`14-verifier/`), ch16 (`16-bpftool/`), and ch22 (`22-iterator/`)
+have **no `name.h`** — no kernel↔user shared struct (ch14 attaches nothing; ch16's
+map is read by bpftool; ch22 outputs seq_file text), so the 3-file layout is
+intentional, not an omission.
 
 Common traps to check before declaring a chapter done:
 - `bpf_ringbuf_reserve` takes 3 args: `(map, size, flags)` — the trailing `, 0` is required.
