@@ -3,6 +3,7 @@
 **Code:** [`../20-lsm/`](../20-lsm/)
 **Build:** `cd 20-lsm && make`
 **Run:** `sudo ./20-lsm/execguard`  *(requires BPF to be an active LSM — see below)*
+**Verify hands-free:** `sudo bash 20-lsm/verify-execguard.sh`  *(loads it, self-triggers a few execs, detaches)*
 
 ## Concept
 
@@ -60,10 +61,16 @@ sudo bash 20-lsm/enable-bpf-lsm.sh   # then: sudo reboot
 It writes the parameter to `GRUB_CMDLINE_LINUX_DEFAULT`, so booting **recovery
 mode** still comes up without `bpf` — a clean fallback if anything misbehaves.
 
-> **Status note.** Because `bpf` is not in this kernel's active LSM list, the
-> exec-audit path below is **not yet live-verified on this machine** — it needs
-> the boot-param change and a reboot. The prerequisite detection above *is*
-> verified (that's the real output). Every other chapter (1–19) was run live.
+After running it and rebooting, the list confirms it:
+
+```
+$ cat /sys/kernel/security/lsm
+lockdown,capability,landlock,yama,apparmor,bpf
+```
+
+> **Status note.** Verified live on this machine after the reboot — `bpf` is now
+> an active LSM, the program attaches, and the exec-audit path logs verdicts (the
+> real output is below). All 22 chapters now run live.
 
 ## Building blocks
 
@@ -90,18 +97,24 @@ Two LSM-specific details:
 `bprm->filename` (read with `BPF_CORE_READ` + `bpf_probe_read_kernel_str`) is the
 path being executed, so each record is `pid / verdict / comm / program`.
 
-## What it shows once BPF LSM is enabled (illustrative)
+## What it shows once BPF LSM is enabled
 
-After adding `bpf` to `lsm=` and rebooting, `sudo ./execguard` would print a line
-per execution, each with the verdict the kernel honoured:
+With `bpf` in `lsm=` after the reboot, the `verify-execguard.sh` helper loaded the
+program and triggered `ls` / `id` / `uname`. One line per execution, each with the
+verdict the kernel honoured (this is the real run):
 
 ```
+Auditing exec via LSM bprm_check (always allowing). Ctrl-C to stop.
 PID      VERDICT COMM             PROGRAM
-20533    allow   bash             /usr/bin/ls
-20534    allow   bash             /usr/bin/git
-20535    allow   sudo             /usr/bin/apt
-...
+4486     allow   bash             /usr/bin/ls
+4487     allow   bash             /usr/bin/id
+4488     allow   bash             /usr/bin/uname
+4489     allow   bash             /usr/bin/sleep
 ```
+
+The `COMM` is `bash` (the script's shell is what calls `execve`), and the fourth
+line is the helper's own `sleep` — the auditor catching itself in the act, just
+as ch22's task iterator saw its own process.
 
 Every line reads `allow` because that's what we return. The lesson is that this
 column is *causal*: flip the one marked line to `return -EPERM` for a matching

@@ -71,8 +71,9 @@ loopback interface presents a full 14-byte Ethernet header** for XDP (all-zero
 MACs and a real ethertype): `lo` reports `addr_len 6` and
 `hard_header_len = ETH_HLEN`. So the exact `eth → IP → L4` parse above works on
 `lo`, and a packet to `127.0.0.1:11111` arrives at XDP framed like any other —
-**confirmed by the live run below**, which dropped real datagrams on `lo`. (This
-corrects ch17's earlier claim that `lo` had no Ethernet header.)
+**confirmed by the live run below**, which dropped real datagrams on `lo`. (ch17
+originally claimed `lo` had no Ethernet header; this run is what corrected it —
+ch17's notes now agree.)
 
 ## Test it (safe — loopback only)
 

@@ -45,7 +45,7 @@ their session, or ask them to paste the output back.
 | Ch 17 | C / libbpf (XDP, first datapath) | ✅ complete (verified live on wlp3s0; parses IPv4+IPv6 to L4; real ambient traffic is UDP/QUIC + ICMPv6 ND, TCP idle-0) |
 | Ch 18 | C / libbpf (tc/BPF, ingress+egress) | ✅ complete (verified live on wlp3s0: egress visible; 639KB in / 2.8KB out download asymmetry) |
 | Ch 19 | C / libbpf (tail calls / PROG_ARRAY) | ✅ complete (verified live: ls/echo/sudo → user 2, root 1, miss 0; echo builtin = no execve; sudo's setuid transition visible) |
-| Ch 20 | C / libbpf (LSM BPF, verdict) | 🔨 built; `bpf` now enabled in GRUB `lsm=` (helper `20-lsm/enable-bpf-lsm.sh`), reboot pending to live-verify exec-audit |
+| Ch 20 | C / libbpf (LSM BPF, verdict) | ✅ complete (verified live after reboot: `bpf` active in `lsm=`; `verify-execguard.sh` logged `allow` verdicts for ls/id/uname via `bprm_check_security`). All 22 chapters now run live. |
 | Ch 21 | C / libbpf (XDP firewall, XDP_DROP) | ✅ complete (verified live: 6 drops on lo:11111). Confirmed lo HAS an eth header → fixed ch17's wrong claim. From the Columbia lecture PDF. |
 | Ch 22 | C / libbpf (BPF iterator, iter/task) | ✅ complete (verified live: dumped ~600 tasks; threading visible — firefox/claude fan out; tool saw itself). Covers the PDF's "iterators". |
 
