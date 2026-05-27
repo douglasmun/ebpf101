@@ -43,8 +43,12 @@ bind(sock, ...sockaddr_ll on the chosen ifindex...);   /* restrict to one NIC */
 ```
 
 Two properties make it the right hook for an IDS:
-- **It sees both directions** — packets in *and* out of the interface — which
-  behavioral rules need.
+- **It can see traffic in both directions.** An `AF_PACKET` socket is delivered
+  both received (`PACKET_HOST`) and transmitted (`PACKET_OUTGOING`) frames — on a
+  real NIC that is ingress *and* egress, which behavioral rules want. On loopback
+  it means every frame arrives *twice*, so this chapter drops the outgoing copy
+  (see [the gotcha below](#the-loopback-double-delivery-gotcha)); the looped-back
+  copy still carries both ends of the conversation, so nothing is lost there.
 - **It is a pure observer.** A socket filter's return value only limits how many
   bytes get queued to *that socket*; it never touches the kernel's own packet
   path. We return `0` (queue nothing; we read everything via the ring buffer),
