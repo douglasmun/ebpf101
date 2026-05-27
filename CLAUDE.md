@@ -31,7 +31,7 @@ Claude note: `sudo` on this machine requires a password, so Claude cannot load
 eBPF programs itself. Hand the `sudo …` command to the user to run via `!` in
 their session, or ask them to paste the output back.
 
-## Chapter status (as of 2026-05-27)
+## Chapter status (as of 2026-05-28)
 
 | Range | Stack | Status |
 |-------|-------|--------|

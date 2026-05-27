@@ -171,9 +171,10 @@ Lesson 2: Unbounded loop (termination not provable)
 ```
 
 Watch `R6` (our `cnt`) climb — `…c8`, `…c9`, … — on every pass through the
-back-edge. Because `cnt` *changes each iteration*, no two loop states are ever
-identical, so the verifier's state-pruning never kicks in and it keeps walking
-the loop. That explodes the verbose log past our 128 KB buffer, and the load
+back-edge (the exact instructions shown vary run to run, since the loop bound
+comes from `bpf_get_prandom_u32`). Because `cnt` *changes each iteration*, no two
+loop states are ever identical, so the verifier's state-pruning never kicks in
+and it keeps walking the loop. That explodes the verbose log past our 128 KB buffer, and the load
 returns **`-28` (`ENOSPC`)** — "no space" for the log. With a bigger buffer it
 would instead hit the 1-million-instruction ceiling (`BPF program is too large`).
 Either way the program is rejected; the fixed version with a constant bound walks

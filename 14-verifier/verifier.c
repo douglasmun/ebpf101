@@ -50,24 +50,34 @@ static void print_log_tail(const char *log, int n)
         printf("      (no verifier log captured)\n");
         return;
     }
-    /* Walk back from the end collecting up to n line starts. */
-    int len = strlen(log);
-    const char *starts[64];
+    if (n < 1)  n = 1;
+    if (n > 64) n = 64;
+
+    /*
+     * Keep the LAST n non-blank line starts in a circular buffer, so this works
+     * even when the log has far more than n lines (the verdict is at the end).
+     */
+    const char *ring[64];
     int count = 0;
+    int len = strlen(log);
     const char *line = log;
     for (const char *p = log; p <= log + len; p++) {
         if (*p == '\n' || *p == '\0') {
-            if (p > line) {              /* skip blank lines */
-                if (count < 64) starts[count++] = line;
+            if (p > line) {                  /* skip blank lines */
+                ring[count % n] = line;
+                count++;
             }
             line = p + 1;
         }
     }
-    int from = count > n ? count - n : 0;
-    for (int i = from; i < count; i++) {
-        const char *end = strchr(starts[i], '\n');
-        int l = end ? (int)(end - starts[i]) : (int)strlen(starts[i]);
-        printf("      | %.*s\n", l, starts[i]);
+
+    int shown = (count < n) ? count : n;
+    int start = (count < n) ? 0 : (count % n);   /* index of the oldest kept line */
+    for (int i = 0; i < shown; i++) {
+        const char *s = ring[(start + i) % n];
+        const char *end = strchr(s, '\n');
+        int l = end ? (int)(end - s) : (int)strlen(s);
+        printf("      | %.*s\n", l, s);
     }
 }
 
