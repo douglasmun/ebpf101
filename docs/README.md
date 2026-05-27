@@ -60,6 +60,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [20](20-lsm.md) | **LSM** `bprm_check_security` | ring buffer | the **return value is a verdict** (allow/deny) — audits exec and always allows; the one program type whose output changes what the kernel does | the end: from `printk("hello")` to a verdict the kernel obeys |
 | [21](21-firewall.md) | **XDP** + action | hash `blocklist` map | applied capstone: an XDP firewall that **`XDP_DROP`s** blocked TCP/UDP ports, with rules set live from user space (the Meta-style map-driven design) | drops by port — source/CIDR/IPv6 and `TX`/`REDIRECT` are extensions |
 | [22](22-iterator.md) | **BPF iterator** `iter/task` | seq_file (read) | a *pull*, not a push: walk every `task_struct` and print it (mini `ps`) via `bpf_seq_printf`; `attach_iter`→`bpf_iter_create`→`read()` | snapshot of one structure — other iters (`tcp`, `bpf_map_elem`, `task_file`) extend it |
+| [23](23-ids.md) | **socket filter** (`AF_PACKET` + `SO_ATTACH_BPF`) | ring buffer | a rule-based IDS: the kernel taps every packet, user space runs C2/anomaly rules (beaconing, port-scan, suspicious-port); first socket-filter attach; `bpf_skb_load_bytes` (socket filters get no direct packet access) | the per-packet copy to user space is exactly the cost the ML-in-eBPF paper pushes back into the kernel |
 
 ## The running mystery (closed in Ch 5)
 
@@ -113,3 +114,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 20. [LSM BPF](20-lsm.md) — eBPF as policy: hook a Linux Security Module check (`bprm_check_security`) where the return value is an allow/deny verdict; audit-only (always allows), with the prerequisite (`bpf` in `lsm=`) and the deny line both spelled out
 21. [XDP firewall](21-firewall.md) — applied capstone: an XDP program that `XDP_DROP`s blocked TCP/UDP ports, with the rules set live from user space via a `blocklist` map (the production, Meta-style design)
 22. [BPF iterators](22-iterator.md) — the pull model: walk a kernel structure (every `task_struct`) and print it with `bpf_seq_printf`, read on demand — a mini `ps`; `attach_iter` → `bpf_iter_create` → `read()`
+23. [A rule-based IDS](23-ids.md) — a `SOCKET_FILTER` (`AF_PACKET` + `SO_ATTACH_BPF`) taps every packet to a ring buffer; user space runs readable C2/anomaly rules (beaconing, port-scan, suspicious-port). The repo's first socket filter; no direct packet access, so `bpf_skb_load_bytes`. Detection-only (observer), no ML

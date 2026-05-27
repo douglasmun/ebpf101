@@ -22,6 +22,7 @@ vmlinux.h
 20-lsm/execguard
 21-firewall/xdpfw
 22-iterator/taskdump
+23-ids/ids
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/

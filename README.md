@@ -32,11 +32,14 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `20-lsm/` | **LSM BPF**: hook `bprm_check_security`; the return value is an allow/deny **verdict** (audits + always allows); needs `bpf` in the kernel `lsm=` list | C / libbpf | ✅ built |
 | `21-firewall/` | **XDP firewall**: parse to L4 and `XDP_DROP` blocked TCP/UDP ports; rules live in a userspace-filled `blocklist` map (runtime-configurable); safe defaults (`lo` 11111) | C / libbpf | ✅ built |
 | `22-iterator/` | **BPF iterator**: a "pull" program — walk every `task_struct` and print it (a mini `ps`) via `bpf_seq_printf`; `attach_iter` → `bpf_iter_create` → `read()` | C / libbpf | ✅ built |
+| `23-ids/` | **rule-based IDS**: a `SOCKET_FILTER` taps every packet to a ring buffer; userspace runs C2/anomaly rules (beaconing, port-scan, suspicious-port). No ML — readable rules; `bpf_skb_load_bytes` (socket filters get no direct packet access) | C / libbpf | ✅ built |
 
-All chapters (1–22) are built **and** run live. Ch20 was the last to verify: its
-LSM hook can only attach once `bpf` is in the kernel `lsm=` boot parameter, so it
-needed the `enable-bpf-lsm.sh` boot-param change and a reboot. Done — the
-exec-audit path now logs `allow` verdicts live. See [`docs/20-lsm.md`](docs/20-lsm.md).
+All chapters (1–23) are built **and** run live. Ch23's three rules were verified
+on loopback with `23-ids/verify-ids.sh` (suspicious-port, port-scan, and a
+0.0%-jitter beacon all fired). Ch20 had needed `bpf` added to the kernel `lsm=`
+boot parameter first (`enable-bpf-lsm.sh` + a reboot); done, its exec-audit path
+logs `allow` verdicts live. See [`docs/23-ids.md`](docs/23-ids.md) and
+[`docs/20-lsm.md`](docs/20-lsm.md).
 
 ## Running an example
 

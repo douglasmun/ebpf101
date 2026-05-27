@@ -118,3 +118,7 @@ And with that, this repo has walked the whole span the field offers: **observe,
 understand, act, compose, govern, and iterate** — from a one-line
 `bpf_trace_printk("hello")` to walking the kernel's own task list. The same small
 machine throughout; only where you point it changes.
+
+➡️ [Chapter 23](23-ids.md) puts several of these pieces to work in one applied
+tool — a rule-based intrusion-detection system: a socket filter taps the wire
+and user space runs the C2/anomaly detection logic.
