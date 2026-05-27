@@ -109,3 +109,5 @@ the system rather than *governing* it. The last step on the advanced track is
 `socket_connect`, …) where the program's return value is an allow/deny verdict.
 That is eBPF as policy enforcement — the move from watching the kernel to telling
 it "no".
+
+➡️ [Chapter 20](20-lsm.md) is that final step.

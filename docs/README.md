@@ -55,6 +55,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [17](17-xdp.md) | **XDP** on a NIC (ingress) | per-CPU array | first datapath program: classify+count packets by protocol, always `XDP_PASS`; direct packet access with verifier bounds checks; generic vs native mode | only counts — the same hook can `DROP`/`REDIRECT`, and egress needs tc |
 | [18](18-tc.md) | **tc/BPF** ingress + egress (`clsact`) | per-CPU array | packets+bytes per direction — **egress** is the new reach; `struct __sk_buff` + `skb->len` for byte accounting; always `TC_ACT_OK` | still observing — `DROP`/`redirect` and policy enforcement remain |
 | [19](19-tailcall.md) | `sys_enter_execve` → tail call | `PROG_ARRAY` + array | program-to-program dispatch: `bpf_tail_call` jumps to a user/root handler and never returns; jump table populated from userspace | observes/routes but doesn't *enforce* — LSM is the policy step |
+| [20](20-lsm.md) | **LSM** `bprm_check_security` | ring buffer | the **return value is a verdict** (allow/deny) — audits exec and always allows; the one program type whose output changes what the kernel does | the end: from `printk("hello")` to a verdict the kernel obeys |
 
 ## The running mystery (closed in Ch 5)
 
@@ -105,3 +106,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 17. [XDP](17-xdp.md) — first datapath program: per-protocol packet counter at the NIC (always `XDP_PASS`); direct packet access with bounds checks; per-CPU maps; generic vs native attach
 18. [tc/BPF](18-tc.md) — the egress-capable datapath hook: packets+bytes per direction via the `clsact` qdisc; `struct __sk_buff` and `skb->len`; always `TC_ACT_OK`
 19. [Tail calls](19-tailcall.md) — program-to-program dispatch via a `PROG_ARRAY` jump table; `bpf_tail_call` never returns; wiring the table from userspace and attaching only the entry program
+20. [LSM BPF](20-lsm.md) — eBPF as policy: hook a Linux Security Module check (`bprm_check_security`) where the return value is an allow/deny verdict; audit-only (always allows), with the prerequisite (`bpf` in `lsm=`) and the deny line both spelled out

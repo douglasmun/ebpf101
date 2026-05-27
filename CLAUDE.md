@@ -45,6 +45,7 @@ their session, or ask them to paste the output back.
 | Ch 17 | C / libbpf (XDP, first datapath) | ✅ complete (verified live on wlp3s0; parses IPv4+IPv6 to L4; real ambient traffic is UDP/QUIC + ICMPv6 ND, TCP idle-0) |
 | Ch 18 | C / libbpf (tc/BPF, ingress+egress) | ✅ complete (verified live on wlp3s0: egress visible; 639KB in / 2.8KB out download asymmetry) |
 | Ch 19 | C / libbpf (tail calls / PROG_ARRAY) | ✅ complete (verified live: ls/echo/sudo → user 2, root 1, miss 0; echo builtin = no execve; sudo's setuid transition visible) |
+| Ch 20 | C / libbpf (LSM BPF, verdict) | 🔨 built; prereq-detection verified, but exec-audit NOT live-verified — `bpf` not in this kernel's active `lsm=` (needs GRUB edit + reboot) |
 
 ## Machine constraints (verified, not assumed)
 
