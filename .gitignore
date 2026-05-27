@@ -20,6 +20,7 @@ vmlinux.h
 18-tc/tcstat
 19-tailcall/tailcall
 20-lsm/execguard
+21-firewall/xdpfw
 
 # --- Python (BCC chapters 1–6) ---
 __pycache__/

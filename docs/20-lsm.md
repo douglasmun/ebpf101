@@ -110,3 +110,6 @@ That closes the arc this repo set out to walk:
 From `bpf_trace_printk("hello")` to returning a verdict the kernel obeys — the
 same small machine (a verified program on a hook, sharing maps with user space),
 pointed at progressively more of the system.
+
+➡️ [Chapter 21](21-firewall.md) is an applied capstone — putting the datapath
+*action* (`XDP_DROP`) and map-driven rules together into a real firewall.

@@ -14,8 +14,8 @@
  * Build:  make
  * Run:    sudo ./xdpcount [interface]      (defaults to the first non-lo NIC)
  *
- * Note: the loopback interface (lo) carries no Ethernet header, so on `lo`
- * everything classifies as "other" — use a real NIC to see the breakdown.
+ * Note: we default to a real NIC rather than `lo` only because `lo` is quiet.
+ * (lo does carry a 14-byte Ethernet header, so the eth parse works there too.)
  */
 #include <stdio.h>
 #include <stdlib.h>

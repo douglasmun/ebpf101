@@ -46,6 +46,7 @@ their session, or ask them to paste the output back.
 | Ch 18 | C / libbpf (tc/BPF, ingress+egress) | ✅ complete (verified live on wlp3s0: egress visible; 639KB in / 2.8KB out download asymmetry) |
 | Ch 19 | C / libbpf (tail calls / PROG_ARRAY) | ✅ complete (verified live: ls/echo/sudo → user 2, root 1, miss 0; echo builtin = no execve; sudo's setuid transition visible) |
 | Ch 20 | C / libbpf (LSM BPF, verdict) | 🔨 built; prereq-detection verified, but exec-audit NOT live-verified — `bpf` not in this kernel's active `lsm=` (needs GRUB edit + reboot) |
+| Ch 21 | C / libbpf (XDP firewall, XDP_DROP) | ✅ complete (verified live: 6 drops on lo:11111). Confirmed lo HAS an eth header → fixed ch17's wrong claim. From the Columbia lecture PDF. |
 
 ## Machine constraints (verified, not assumed)
 

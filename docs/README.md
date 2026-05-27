@@ -56,6 +56,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [18](18-tc.md) | **tc/BPF** ingress + egress (`clsact`) | per-CPU array | packets+bytes per direction — **egress** is the new reach; `struct __sk_buff` + `skb->len` for byte accounting; always `TC_ACT_OK` | still observing — `DROP`/`redirect` and policy enforcement remain |
 | [19](19-tailcall.md) | `sys_enter_execve` → tail call | `PROG_ARRAY` + array | program-to-program dispatch: `bpf_tail_call` jumps to a user/root handler and never returns; jump table populated from userspace | observes/routes but doesn't *enforce* — LSM is the policy step |
 | [20](20-lsm.md) | **LSM** `bprm_check_security` | ring buffer | the **return value is a verdict** (allow/deny) — audits exec and always allows; the one program type whose output changes what the kernel does | the end: from `printk("hello")` to a verdict the kernel obeys |
+| [21](21-firewall.md) | **XDP** + action | hash `blocklist` map | applied capstone: an XDP firewall that **`XDP_DROP`s** blocked TCP/UDP ports, with rules set live from user space (the Meta-style map-driven design) | drops by port — source/CIDR/IPv6 and `TX`/`REDIRECT` are extensions |
 
 ## The running mystery (closed in Ch 5)
 
@@ -107,3 +108,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 18. [tc/BPF](18-tc.md) — the egress-capable datapath hook: packets+bytes per direction via the `clsact` qdisc; `struct __sk_buff` and `skb->len`; always `TC_ACT_OK`
 19. [Tail calls](19-tailcall.md) — program-to-program dispatch via a `PROG_ARRAY` jump table; `bpf_tail_call` never returns; wiring the table from userspace and attaching only the entry program
 20. [LSM BPF](20-lsm.md) — eBPF as policy: hook a Linux Security Module check (`bprm_check_security`) where the return value is an allow/deny verdict; audit-only (always allows), with the prerequisite (`bpf` in `lsm=`) and the deny line both spelled out
+21. [XDP firewall](21-firewall.md) — applied capstone: an XDP program that `XDP_DROP`s blocked TCP/UDP ports, with the rules set live from user space via a `blocklist` map (the production, Meta-style design)

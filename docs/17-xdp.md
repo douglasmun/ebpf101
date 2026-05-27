@@ -79,10 +79,12 @@ bpf_xdp_attach(ifindex, prog_fd, XDP_FLAGS_SKB_MODE, NULL);
   and works on *any* interface (virtual NICs, wifi, …). We use generic mode for
   portability; production drop/redirect setups use native.
 
-> **Loopback has no Ethernet header.** On `lo`, generic XDP hands you the packet
-> starting at the IP header, so the eth parse misfires and everything lands in
-> "other". Use a real NIC to see the protocol breakdown — itself a reminder that
-> XDP works at L2 and assumes a link-layer header.
+> **Use a real NIC, not `lo` — but not for the reason you might think.** `lo`
+> *does* carry a 14-byte Ethernet header for XDP (all-zero MACs; it reports
+> `addr_len 6`, `hard_header_len = ETH_HLEN`), so the eth parse works there too —
+> ch21's firewall defaults to `lo` and drops correctly. The reason to point this
+> counter at a real interface is simply that `lo` is *quiet*: the protocol
+> breakdown is only interesting where real traffic flows.
 
 ## What the output reveals
 

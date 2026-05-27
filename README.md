@@ -30,6 +30,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `18-tc/` | **tc/BPF**: count packets+bytes on **ingress AND egress** (egress is new vs XDP) via the `clsact` qdisc; `struct __sk_buff` + `skb->len`; always `TC_ACT_OK` | C / libbpf | ✅ built |
 | `19-tailcall/` | **tail calls**: an `execve` dispatcher jumps via a `PROG_ARRAY` to a user/root handler; `bpf_tail_call` never returns; jump table wired from userspace | C / libbpf | ✅ built |
 | `20-lsm/` | **LSM BPF**: hook `bprm_check_security`; the return value is an allow/deny **verdict** (audits + always allows); needs `bpf` in the kernel `lsm=` list | C / libbpf | 🔨 built\* |
+| `21-firewall/` | **XDP firewall**: parse to L4 and `XDP_DROP` blocked TCP/UDP ports; rules live in a userspace-filled `blocklist` map (runtime-configurable); safe defaults (`lo` 11111) | C / libbpf | ✅ built |
 
 \* Ch1–19 are built **and** run live. Ch20 builds and its prerequisite-check runs,
 but the LSM hook can't attach until `bpf` is added to the kernel `lsm=` boot
