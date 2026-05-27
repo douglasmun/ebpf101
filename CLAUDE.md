@@ -41,6 +41,7 @@ their session, or ask them to paste the output back.
 | Ch 13 | C / libbpf (tcp_sock counters) | ✅ complete (verified live; comm-fix confirmed) |
 | Ch 14 | C / libbpf (verifier/debugging) | ✅ complete (verified live: all 3 lessons reject then fix-loads; load-time demo, no attach) |
 | Ch 15 | C / libbpf (uprobe / bashreadline) | ✅ complete (verified live: traced interactive bash commands incl. a mistyped one) |
+| Ch 16 | C / libbpf (bpftool / pinning) | ✅ complete (verified live: pinned, inspected with bpftool; BTF-typed map dumps as decoded JSON) |
 
 ## Machine constraints (verified, not assumed)
 
@@ -56,9 +57,9 @@ their session, or ask them to paste the output back.
 Each C chapter follows a 4-file structure: `name.h`, `name.bpf.c`, `name.c`, `Makefile`.
 The Makefile has four steps: `vmlinux.h` → `.bpf.o` → `.skel.h` → binary.
 
-Exception: ch14 (`14-verifier/`) has **no `name.h`** — it's a load-time-only teaching
-chapter (nothing is attached, no kernel↔user shared struct), so the 3-file layout is
-intentional, not an omission.
+Exception: ch14 (`14-verifier/`) and ch16 (`16-bpftool/`) have **no `name.h`** — they
+have no kernel↔user shared struct (ch14 attaches nothing; ch16's map is read by
+bpftool, not by user space), so the 3-file layout is intentional, not an omission.
 
 Common traps to check before declaring a chapter done:
 - `bpf_ringbuf_reserve` takes 3 args: `(map, size, flags)` — the trailing `, 0` is required.

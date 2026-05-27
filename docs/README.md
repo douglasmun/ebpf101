@@ -49,6 +49,7 @@ Each chapter exists because the previous mechanism hit a wall:
 | [13](13-tcplife.md) | same `tcp_set_state` kprobe | libbpf LRU maps + ring buffer | one summary per *closed* connection: bytes tx/rx, RTT, retransmits via `struct tcp_sock`; identity stashed at `SYN_SENT` (fixes ch12's `comm`) | only a postmortem — no live/real-time throughput |
 | [14](14-verifier.md) | — (load-time only) | none — nothing attached | *why loads fail*: NULL deref, unbounded loop, OOB index — each rejection + fix; verifier logs captured via `kernel_log_buf` + selective `set_autoload` | can debug rejections, but not inspect what's already loaded/running |
 | [15](15-bashreadline.md) | **uretprobe** `/usr/bin/bash:readline` | libbpf ring buffer | every interactive shell command, system-wide; first user-space attach (path+symbol); return value read with `probe_read_user_str` | needs a symbol/offset to locate the function; no view of what's *attached* |
+| [16](16-bpftool.md) | `sys_enter_openat` (per-UID counter) | hash map **pinned to bpffs** | operating eBPF with `bpftool`: list/show progs & maps, dump map by id or pinned path, view xlated bytecode; pinning for stable paths + persistence | all observability so far — nothing yet *acts on* the datapath |
 
 ## The running mystery (closed in Ch 5)
 
@@ -95,3 +96,4 @@ hand — `sudo python3 …` for ch1–6, `sudo ./program` for ch7+.
 13. [TCP life (tcplife)](13-tcplife.md) — per-connection summary at close; read the larger `struct tcp_sock` (bytes/RTT/retransmits); stash identity at `SYN_SENT` to fix the softirq `comm` problem
 14. [The verifier & debugging](14-verifier.md) — deliberately-rejected programs (NULL deref, unbounded loop, OOB index) and their fixes; capturing verifier logs programmatically; clang vs. verifier as separate gates
 15. [Uprobes (bashreadline)](15-bashreadline.md) — first user-space attach: uretprobe on `bash:readline` traces interactive commands system-wide; attach by path+symbol; reading a returned user string
+16. [The bpftool workflow](16-bpftool.md) — operating eBPF, not writing it: pin a map/prog to bpffs, then list/show/dump/inspect with `bpftool`; decoding raw map dumps; xlated bytecode

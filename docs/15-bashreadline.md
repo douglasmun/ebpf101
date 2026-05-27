@@ -131,3 +131,5 @@ what's *already* loaded. The natural next step is the **`bpftool` workflow** —
 listing loaded programs and maps, dumping map contents, and following pinned
 objects — the operational side of eBPF we've used in the Makefiles (`btf dump`,
 `gen skeleton`) but never explored directly.
+
+➡️ [Chapter 16](16-bpftool.md) takes that step.

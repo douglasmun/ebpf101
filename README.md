@@ -25,6 +25,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `13-tcplife/` | same `tcp_set_state` kprobe, per-connection summary at close: read `struct tcp_sock` byte counters / RTT / retransmits; stash identity at `SYN_SENT` to fix attribution | C / libbpf | ✅ built |
 | `14-verifier/` | the verifier as a gate: programs that fail to load (NULL deref, unbounded loop, OOB index) + their fixes; capture verifier logs via `kernel_log_buf` + selective `set_autoload` | C / libbpf | ✅ built |
 | `15-bashreadline/` | first **uprobe**: uretprobe on `/usr/bin/bash:readline` to trace every interactive shell command system-wide; manual uprobe attach by path+symbol; `bpf_ringbuf_discard` | C / libbpf | ✅ built |
+| `16-bpftool/` | operating eBPF: a per-UID `openat` counter **pinned** to `/sys/fs/bpf`, then inspected/dumped with `bpftool` (prog/map show, dump by id & pinned path, xlated) | C / libbpf | ✅ built |
 
 ## Running an example
 
