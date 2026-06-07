@@ -30,6 +30,7 @@ __pycache__/
 
 # --- Machine-local Claude Code settings ---
 .claude/settings.local.json
+CLAUDE.md
 
 # --- Editor / OS cruft ---
 *.swp
