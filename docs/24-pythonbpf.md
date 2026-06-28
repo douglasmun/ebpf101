@@ -114,7 +114,21 @@ python3 /work/hello_pythonbpf.py     # Ctrl-C to stop
 
 Notes from the actual run: `pip install pythonbpf` pulls in `pylibbpf`, which
 **builds from source** (cmake/ninja/pybind11 + `python3-dev` — hence those
-packages). The container compiles a BPF object for **aarch64**; the x86 path is
-untested here. tracefs must be mounted at `/sys/kernel/tracing` specifically —
-libbpf looks there first, and a mount only at `/sys/kernel/debug/tracing` gave
+packages). The verified run was on **aarch64** (the Docker Desktop VM's native
+arch). tracefs must be mounted at `/sys/kernel/tracing` specifically — libbpf
+looks there first, and a mount only at `/sys/kernel/debug/tracing` gave
 `-ENOENT` on the tracepoint.
+
+### x86_64 status (emulated only) — known wrong result
+
+Re-running under `docker --platform linux/amd64` exercises the x86_64 *toolchain*
+(the kernel is still the VM's arm64 one — a single shared LinuxKit kernel). On
+x86 the program **builds, loads, and attaches cleanly**, but the **counter value
+is wrong**: the lookup-then-update (read-modify-write) stores 0 instead of 1.
+Isolation points to a layer *below* Python-BPF — the generated LLVM IR is
+byte-identical across arches, and a constant `update(pid, 42)` stores correctly
+on both; only the `lookup(...)`-result path diverges. Most likely an `llc
+-march=bpf` miscompile under qemu emulation rather than a genuine native-x86 bug,
+but **a real x86_64 Linux host is needed to tell those apart**. Until then,
+treat this chapter as verified on **aarch64 only**. (Full evidence: PR #1
+comment.)
