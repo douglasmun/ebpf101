@@ -65,7 +65,7 @@ from ctypes import c_int32, c_int64, c_uint64, c_void_p
 
 from pythonbpf import bpf, bpfglobal, map, section, BPF
 from pythonbpf.maps import HashMap
-from pythonbpf.helper import pid          # note: pythonbpf.helper (singular)
+from pythonbpf.helper import pid, deref   # note: pythonbpf.helper (singular)
 
 
 # --- The eBPF program, written in Python (not C, not a C string) -----------
@@ -91,8 +91,17 @@ def counts() -> HashMap:
 @section("tracepoint/syscalls/sys_enter_execve")
 def count_exec(ctx: c_void_p) -> c_int64:
     process_id = pid()                       # bpf_get_current_pid_tgid() >> 32
-    prev = counts.lookup(process_id)         # like map[key], None if absent
-    counts.update(process_id, (prev or 0) + 1)
+    prev = counts.lookup(process_id)         # returns a POINTER, NULL if absent
+    # IMPORTANT: lookup returns a pointer into the map, not the stored value.
+    # `prev` is truthy when the key exists; to read the count you must deref(prev).
+    # Writing `(prev or 0) + 1` is a trap: Python-BPF compiles `prev or 0` as a
+    # truthiness test on the pointer (always 1 once the key exists), so it stores
+    # 2 forever and never accumulates. See docs/24-pythonbpf.md and the upstream
+    # issue linked there.
+    if prev:
+        counts.update(process_id, deref(prev) + 1)
+    else:
+        counts.update(process_id, 1)
     return 0
 
 

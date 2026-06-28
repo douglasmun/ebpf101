@@ -2,7 +2,7 @@
 
 **Code:** [`../24-pythonbpf/hello_pythonbpf.py`](../24-pythonbpf/hello_pythonbpf.py)
 **Run:** `sudo python3 24-pythonbpf/hello_pythonbpf.py`
-**Status:** ⚠️ experimental dependency, but **verified to run**. [Python-BPF](https://github.com/pythonbpf/Python-BPF) is a pre-1.0 project its authors call *"not ready for production use,"* so treat it as a preview, not a recommendation. This example was run end-to-end (compile → load → attach → map read, EXIT 0) in a privileged Ubuntu 24.04 container on Docker Desktop's **kernel 6.12 / aarch64** VM (BTF present, tracefs mounted). It has **not** been run on the host (macOS) or on x86; see the run notes at the bottom.
+**Status:** ⚠️ experimental dependency, but **verified to run**. [Python-BPF](https://github.com/pythonbpf/Python-BPF) is a pre-1.0 project its authors call *"not ready for production use,"* so treat it as a preview, not a recommendation. This example was run end-to-end (compile → load → attach → map read, EXIT 0) in a privileged Ubuntu 24.04 container on Docker Desktop's **kernel 6.12 / aarch64** VM (BTF present, tracefs mounted), and the counter is verified to **accumulate correctly** (see the `deref()` note at the bottom — an earlier version of this example had a silent counter bug). It has **not** been run on the host (macOS) or on a native x86 kernel.
 
 ## Concept
 
@@ -119,16 +119,38 @@ arch). tracefs must be mounted at `/sys/kernel/tracing` specifically — libbpf
 looks there first, and a mount only at `/sys/kernel/debug/tracing` gave
 `-ENOENT` on the tracepoint.
 
-### x86_64 status (emulated only) — known wrong result
+### A Python-BPF gotcha this chapter hit (and the x86 false alarm)
 
-Re-running under `docker --platform linux/amd64` exercises the x86_64 *toolchain*
-(the kernel is still the VM's arm64 one — a single shared LinuxKit kernel). On
-x86 the program **builds, loads, and attaches cleanly**, but the **counter value
-is wrong**: the lookup-then-update (read-modify-write) stores 0 instead of 1.
-Isolation points to a layer *below* Python-BPF — the generated LLVM IR is
-byte-identical across arches, and a constant `update(pid, 42)` stores correctly
-on both; only the `lookup(...)`-result path diverges. Most likely an `llc
--march=bpf` miscompile under qemu emulation rather than a genuine native-x86 bug,
-but **a real x86_64 Linux host is needed to tell those apart**. Until then,
-treat this chapter as verified on **aarch64 only**. (Full evidence: PR #1
-comment.)
+`counts.lookup(key)` returns a **pointer** into the map (NULL if absent), not the
+stored value — exactly like `bpf_map_lookup_elem` in C. To read the count you
+must dereference it: `deref(prev)`. The obvious-looking `(prev or 0) + 1` is a
+**trap**: Python-BPF compiles `prev or 0` as a *truthiness test on the pointer*
+(see the emitted IR: `icmp ne ptr, null` → `phi i1` → `sext i1 to i64`), so the
+"previous value" is only ever 0 or 1 and the counter never accumulates. That is
+why this chapter uses the explicit form:
+
+```python
+prev = counts.lookup(process_id)
+if prev:
+    counts.update(process_id, deref(prev) + 1)
+else:
+    counts.update(process_id, 1)
+```
+
+A fixed-key test makes the bug obvious: with `(prev or 0) + 1`, hammering one key
+20× leaves it at **0**; with `deref(prev)`, it reads **20**. Verified on aarch64.
+
+**The x86 "miscompile" was a misdiagnosis.** An earlier run under
+`docker --platform linux/amd64` showed wrong counts and I suspected an
+`llc`/qemu codegen difference. It wasn't: the per-PID counter only *looked*
+correct on arm64 because fresh execs get fresh PIDs, so every hit took the
+first-insert path (store 1) and the broken accumulation never showed. The
+`(prev or 0)` bug is **architecture-independent** — the generated IR is identical
+on both arches, and the fixed-key test fails on arm64 too. The real fix was
+`deref()`, not anything arch-specific. (This was reported upstream; see the
+issue linked from PR #1.)
+
+Other run notes: `pip install pythonbpf` pulls in `pylibbpf`, which **builds from
+source** (cmake/ninja/pybind11 + `python3-dev`). tracefs must be mounted at
+`/sys/kernel/tracing` specifically — libbpf looks there first, and a mount only
+at `/sys/kernel/debug/tracing` gave `-ENOENT` on the tracepoint.
