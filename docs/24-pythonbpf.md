@@ -147,8 +147,8 @@ correct on arm64 because fresh execs get fresh PIDs, so every hit took the
 first-insert path (store 1) and the broken accumulation never showed. The
 `(prev or 0)` bug is **architecture-independent** — the generated IR is identical
 on both arches, and the fixed-key test fails on arm64 too. The real fix was
-`deref()`, not anything arch-specific. (This was reported upstream; see the
-issue linked from PR #1.)
+`deref()`, not anything arch-specific. (Reported upstream:
+[pythonbpf/Python-BPF#89](https://github.com/pythonbpf/Python-BPF/issues/89).)
 
 Other run notes: `pip install pythonbpf` pulls in `pylibbpf`, which **builds from
 source** (cmake/ninja/pybind11 + `python3-dev`). tracefs must be mounted at
