@@ -1,0 +1,28 @@
+# Chapter 24 — Python-BPF (EXPERIMENTAL, pre-1.0, pin deliberately)
+#
+# Python-BPF and pylibbpf are under active development and "not ready for
+# production use" (upstream's own words). Both are pre-1.0, so DON'T trust a
+# floating install — pin to the exact versions you tested and bump deliberately,
+# re-running the example each time (the decorator/import API still moves).
+#
+# Resolve the current versions on PyPI, then pin them, e.g.:
+#   python3 -m pip install pythonbpf pylibbpf
+#   python3 -m pip freeze | grep -Ei 'pythonbpf|pylibbpf|llvmlite'
+# and replace the loose specifiers below with the resulting ==X.Y.Z lines.
+#
+# Linux only. NOTE: pylibbpf has NO prebuilt wheels — pip BUILDS it from source
+# via cmake, so you also need these SYSTEM packages before pip will succeed:
+#   python3-dev clang llvm libbpf-dev libelf-dev zlib1g-dev libcap-dev libssl-dev
+#   cmake ninja-build pybind11-dev g++ pkg-config   (Ubuntu names)
+# and on PATH: clang + bpftool, with a BTF-capable kernel (/sys/kernel/btf/vmlinux).
+# bpftool isn't a standalone Ubuntu package — build it from libbpf/bpftool.
+#
+# Verified working set: pythonbpf + pylibbpf (internal 0.0.7) + llvmlite on
+# Python 3.12, kernel 6.12/aarch64 (Docker Desktop VM). See docs/24-pythonbpf.md
+# for the full container recipe and the run transcript.
+#
+# Install:  python3 -m pip install -r 24-pythonbpf/requirements.txt
+
+pythonbpf
+pylibbpf
+llvmlite
