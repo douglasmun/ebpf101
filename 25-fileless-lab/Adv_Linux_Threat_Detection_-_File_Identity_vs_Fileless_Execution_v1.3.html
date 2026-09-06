@@ -2700,7 +2700,12 @@ try { (() => {
       box-sizing: border-box;
       padding: var(--doc-page-margin);
     }
-    .frame { width: 100%; border-collapse: collapse; }
+    .frame { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    /* table-layout:fixed pins the frame to the sheet's content box.
+       Under auto layout a wide intrinsic child (a 1200px-natural image,
+       a long unbroken code token) raises the table's min-content width
+       and the frame grows past the page box, spilling every slotted
+       block over the sheet edge. */
     /* Scaled-fit mode (content-width/content-height): the inner .fit box
      * lays the content out at its authored fixed size and scales it onto
      * the printable area; .fit-box reserves the scaled footprint in flow
