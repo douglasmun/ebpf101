@@ -124,10 +124,21 @@ looks there first, and a mount only at `/sys/kernel/debug/tracing` gave
 `counts.lookup(key)` returns a **pointer** into the map (NULL if absent), not the
 stored value — exactly like `bpf_map_lookup_elem` in C. To read the count you
 must dereference it: `deref(prev)`. The obvious-looking `(prev or 0) + 1` is a
-**trap**: Python-BPF compiles `prev or 0` as a *truthiness test on the pointer*
-(see the emitted IR: `icmp ne ptr, null` → `phi i1` → `sext i1 to i64`), so the
-"previous value" is only ever 0 or 1 and the counter never accumulates. That is
-why this chapter uses the explicit form:
+**trap**, for two compounding reasons. The lookup result is never dereferenced —
+`prev or 0` becomes a *truthiness test on the pointer* — and Python-BPF's `or`
+returns an i1 regardless of its operands, so the bool is sign-extended into the
+addition:
+
+```llvm
+%".13" = load i64*, i64** %"prev"     ; loads the pointer, not the pointee
+%".14" = icmp ne i64* %".13", null    ; "is the key present?", not "what is it?"
+%"or.result" = phi i1 ...
+%".19" = sext i1 %"or.result" to i64  ; the bool becomes the addend
+%".20" = add i64 %".19", 1            ; so the count never exceeds 2
+```
+
+The stored count never enters the arithmetic, and the counter never accumulates.
+That is why this chapter uses the explicit form:
 
 ```python
 prev = counts.lookup(process_id)
@@ -138,7 +149,9 @@ else:
 ```
 
 A fixed-key test makes the bug obvious: with `(prev or 0) + 1`, hammering one key
-20× leaves it at **0**; with `deref(prev)`, it reads **20**. Verified on aarch64.
+20× pins it at **2** (the truthy pointer contributes 1, plus the literal 1);
+with `deref(prev)`, it reads **20**.
+Verified on aarch64.
 
 **The x86 "miscompile" was a misdiagnosis.** An earlier run under
 `docker --platform linux/amd64` showed wrong counts and I suspected an
@@ -149,6 +162,22 @@ first-insert path (store 1) and the broken accumulation never showed. The
 on both arches, and the fixed-key test fails on arm64 too. The real fix was
 `deref()`, not anything arch-specific. (Reported upstream:
 [pythonbpf/Python-BPF#89](https://github.com/pythonbpf/Python-BPF/issues/89).)
+
+**Upstream fix submitted — [PR #100](https://github.com/pythonbpf/Python-BPF/pull/100)**
+(07 Sep 2026, open). It fixes both halves: pointer operands are auto-dereferenced in
+the boolean-operand path (mirroring what the binary-operator path already does), and
+the `and`/`or` phi carries operand *values* instead of an i1, which is what Python's
+`or` means. Fixing only the deref is not enough — the `sext i1` survives it.
+
+Worth knowing if you write your own tests against Python-BPF: its IR and llc test
+tiers only assert that compilation *succeeds*, so a wrong-value miscompile passes
+both. That is how this reached a release. The regression test in that PR asserts on
+the emitted IR instead.
+
+**Until #100 lands, keep using `deref()`** — the pinned `pythonbpf==0.1.9` in
+`requirements.txt` has the bug, and the example above is written to work with it.
+If the PR is merged, `(prev or 0) + 1` becomes correct and the workaround is
+optional, but the explicit `deref()` remains clearer about what a lookup returns.
 
 Other run notes: `pip install pythonbpf` pulls in `pylibbpf`, which **builds from
 source** (cmake/ninja/pybind11 + `python3-dev`). tracefs must be mounted at
