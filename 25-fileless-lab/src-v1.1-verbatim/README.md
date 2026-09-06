@@ -2,10 +2,11 @@
 
 Byte-identical to the `<pre>` blocks of
 `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`.
-That file is no longer in the working tree; retrieve it with
 
-
-    git show "$(git log --diff-filter=A --format=%H -1 -- Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html)":Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html
+That document is TLP:GREEN with an author-imposed need-to-know restriction and is
+**not published in this repository** — not in the tree and not in its history. Ask
+the author if you need a copy. These files are the extracted code, which carries no
+such restriction, so the before/after comparison below stands on its own.
 
 Nothing here has been corrected.
 

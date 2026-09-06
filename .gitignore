@@ -46,3 +46,7 @@ CLAUDE.md
 *.swp
 *~
 .DS_Store
+
+# --- Ch25: the source document is TLP:GREEN and is NOT published in this
+# public repo. It is distributed separately, on a need-to-know basis.
+25-fileless-lab/*.html

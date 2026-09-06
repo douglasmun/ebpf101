@@ -7,6 +7,9 @@ confirm src/ still matches the document:
 
     ./extract-blocks.py ./Adv_Linux_Threat_Detection_*v1.2.html /tmp/blocks
     diff /tmp/blocks/block_10.txt src/memfd_exec.c
+
+The document itself is TLP:GREEN and is not published in this repo, so supply your
+own copy as argv[1]. The extracted code is already checked in under src/.
 """
 import html
 import re

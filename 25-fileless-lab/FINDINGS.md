@@ -13,12 +13,16 @@ line (#1), a gate/filesystem assumption that does not hold on overlayfs (#3), an
 auditd rules that fail to load at all (#8).
 
 - Tested: 2026-09-06
-- Document audited: `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`, removed from the working tree after the lab was
-  committed. Retrieve it from history with:
+- Document audited: `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`,
+  and the result of that audit, the same document at v1.2. **Neither is in this
+  repository.** The document is TLP:GREEN with an author-imposed need-to-know
+  restriction, so it is not published here; it is distributed separately. Ask the
+  author if you need a copy.
 
-      git show "$(git log --diff-filter=A --format=%H -1 -- Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html)":Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html
-
-  The result of that audit, `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.2.html`, lives in this directory.
+  Everything the document contained that this lab exercises is reproduced here as
+  source: `src-v1.1-verbatim/` is the code exactly as v1.1 printed it, and `src/` is
+  the code as published in v1.2, re-extracted from that document. So the findings
+  below can be reproduced in full without the HTML.
 - Test host: Apple Silicon (arm64), Docker 29.7.2
 
 ## Method
@@ -326,7 +330,7 @@ correctly. Retracted; `tests/exit_test.sh` documents the check.
 
 ## v1.2 verification pass (07 Sep 2026)
 
-`Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.2.html` was built
+v1.2 of the document (not in this repo — see above) was built
 from v1.1 by injecting the fixed sources back into the document, then re-running the
 whole suite against code **re-extracted from the v1.2 HTML itself** — so what the lab
 ran is what a reader copies out of the published file, not a parallel tree that happens
