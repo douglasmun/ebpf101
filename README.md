@@ -42,6 +42,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `22-iterator/` | **BPF iterator**: a "pull" program — walk every `task_struct` and print it (a mini `ps`) via `bpf_seq_printf`; `attach_iter` → `bpf_iter_create` → `read()` | C / libbpf | ✅ built |
 | `23-ids/` | **rule-based IDS**: a `SOCKET_FILTER` taps every packet to a ring buffer; userspace runs C2/anomaly rules (beaconing, port-scan, suspicious-port). No ML — readable rules; `bpf_skb_load_bytes` (socket filters get no direct packet access) | C / libbpf | ✅ built |
 | `24-pythonbpf/` | **Python-BPF**: write the *kernel-side* program in pure Python (`@bpf`/`@map`/`@section`), lowered to LLVM IR via `llvmlite` → BPF `.o` → loaded by `pylibbpf`. Same hash-map execve-counter idea as ch02 (keyed on PID here) — "kernel side, three ways" | Python / Python-BPF | ⚠️ pre-1.0 dep, verified in Docker |
+| `25-fileless-lab/` | **fileless execution, tested**: a container lab that builds and runs every listing from a threat-detection note — `memfd_create`+`execve`, `O_TMPFILE`, unlink+`fexecve`, pipe-to-interpreter — and checks the claimed `/proc/PID/exe` artifacts against what the kernel actually reports. Found 8 defects in the published code | C / shell / Docker | ✅ 8/8 in Docker |
 
 Chapters 1–23 are built **and** run live on this machine. Chapter 24
 (Python-BPF) depends on a pre-1.0 project ("not ready for production use"), so
@@ -55,6 +56,16 @@ on loopback with `23-ids/verify-ids.sh` (suspicious-port, port-scan, and a
 boot parameter first (`enable-bpf-lsm.sh` + a reboot); done, its exec-audit path
 logs `allow` verdicts live. See [`docs/23-ids.md`](docs/23-ids.md) and
 [`docs/20-lsm.md`](docs/20-lsm.md).
+
+Chapter 25 is the odd one out: it is a **lab that audits a document** rather than
+a new eBPF technique. Every code listing in the accompanying note was built and
+executed in a container, which turned up eight defects — including a loader that
+deleted the file it was handed, and two auditd rules that never parsed. The
+document it validates is published here in both formats, TLP:CLEAR:
+[HTML](25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.html)
+· [PDF](25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.pdf).
+The findings, the before/after source trees and the full run transcripts are in
+[`25-fileless-lab/FINDINGS.md`](25-fileless-lab/FINDINGS.md).
 
 ## Running an example
 
