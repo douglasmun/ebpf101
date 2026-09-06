@@ -51,5 +51,9 @@ CLAUDE.md
 # in this public repo. v1.1 and v1.2 are TLP:GREEN with an author need-to-know
 # restriction; they are distributed separately. v1.3 is TLP:CLEAR and is
 # published here, so it is deliberately not matched below.
-25-fileless-lab/*v1.1.html
-25-fileless-lab/*v1.2.html
+# Matched anywhere in the tree (a v1.1 PDF has sat in the repo root before),
+# and in both formats. v1.3 is deliberately not matched.
+*v1.1.html
+*v1.1.pdf
+*v1.2.html
+*v1.2.pdf
