@@ -179,6 +179,17 @@ the emitted IR instead.
 If the PR is merged, `(prev or 0) + 1` becomes correct and the workaround is
 optional, but the explicit `deref()` remains clearer about what a lookup returns.
 
+If you want the fixed compiler before then, the branch behind #100 is on a fork:
+
+```bash
+pip install "git+https://github.com/douglasmun/Python-BPF@fix/bool-op-map-lookup-deref"
+```
+
+This chapter deliberately does **not** depend on that fork. Installing a personal
+fork of a pre-1.0 project is a worse default than a released version plus one
+explicit `deref()`, and the example does not use the broken form anyway. The fork
+is there if you want to reproduce the before/after IR yourself.
+
 Other run notes: `pip install pythonbpf` pulls in `pylibbpf`, which **builds from
 source** (cmake/ninja/pybind11 + `python3-dev`). tracefs must be mounted at
 `/sys/kernel/tracing` specifically — libbpf looks there first, and a mount only
