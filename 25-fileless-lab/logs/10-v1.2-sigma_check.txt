@@ -1,0 +1,19 @@
+===============================================================
+  src/ (v1.2 code) — tests/sigma_check.sh
+  2026-09-06T16:53:20Z
+===============================================================
+
+=== SIGMA RULE VALIDATION against observed Image strings ===
+  /memfd:payload (deleted)                 r22_memfd=MATCH  r23_deleted=MATCH
+  /memfd:payload (deleted)                 r22_memfd=MATCH  r23_deleted=MATCH
+  /tmp/#34523272 (deleted)                 r22_memfd=no     r23_deleted=MATCH
+  /work/sc.deleted_exec.55 (deleted)       r22_memfd=no     r23_deleted=MATCH
+
+=== syscall used by each loader (audit rule coverage, block 21) ===
+  memfd_exec      : execve memfd_create open 
+  memfd_execveat  : execveat memfd_create open 
+  memfd_script    : execve memfd_create 
+  tmpfile_exec    : fexecve open 
+  deleted_exec    : fexecve open 
+
+[exit=0]

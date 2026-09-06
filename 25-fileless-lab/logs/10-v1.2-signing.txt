@@ -1,0 +1,43 @@
+===============================================================
+  src/ (v1.2 code) — tests/signing.sh
+  2026-09-06T16:53:24Z
+===============================================================
+
++ cd /work
++ echo '=== BLOCK 20: openssl CA + leaf signer pipeline (verbatim commands) ==='
++ openssl req -new -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -keyout org-ca.key -out org-ca.crt -days 3650 -nodes -subj '/CN=Org Binary-Authz CA' -addext basicConstraints=critical,CA:TRUE -addext keyUsage=critical,keyCertSign
+=== BLOCK 20: openssl CA + leaf signer pipeline (verbatim commands) ===
+-----
+CA EXIT=0
++ echo 'CA EXIT=0'
++ openssl x509 -in org-ca.crt -outform DER -out org-ca.der
+DER EXIT=0
++ echo 'DER EXIT=0'
++ openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -keyout sign.key -out sign.csr -subj '/CN=fileless-gate signer 2026-Q3'
+-----
+CSR EXIT=0
++ echo 'CSR EXIT=0'
++ openssl x509 -req -in sign.csr -CA org-ca.crt -CAkey org-ca.key -CAcreateserial -days 180 -out sign.crt -extfile /dev/fd/63
+++ printf 'keyUsage=critical,digitalSignature\nextendedKeyUsage=codeSigning'
+Certificate request self-signature ok
+subject=CN=fileless-gate signer 2026-Q3
++ echo 'LEAF EXIT=0'
++ openssl x509 -in sign.crt -outform DER -out sign.der
+LEAF EXIT=0
+DER2 EXIT=0
+
+=== verify the chain actually validates ===
++ echo 'DER2 EXIT=0'
++ set +x
+sign.crt: OK
+verify exit=0
+
+=== leaf cert contents ===
+subject=CN=fileless-gate signer 2026-Q3
+issuer=CN=Org Binary-Authz CA
+X509v3 Key Usage: critical
+    Digital Signature
+X509v3 Extended Key Usage: 
+    Code Signing
+
+[exit=0]

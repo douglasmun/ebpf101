@@ -1,0 +1,34 @@
+===============================================================
+  src/ (v1.2 code) — tests/exit_test.sh
+  2026-09-06T16:53:24Z
+===============================================================
+
+=== direct exit status (no pipe) ===
+[loader] memfd_create() -> fd 4
+[loader] wrote 704792 ELF bytes into the memfd (nothing on disk)
+[loader] execve("/proc/self/fd/4", ...)
+execve: Permission denied
+  memfd_exec exit=1
+execve: Permission denied
+  memfd_script exit=1
+
+=== so the earlier exit=0 was the SED PIPELINE, not the program ===
+x[loader] memfd_create() -> fd 4
+x[loader] wrote 704792 ELF bytes into the memfd (nothing on disk)
+x[loader] execve("/proc/self/fd/4", ...)
+xexecve: Permission denied
+  piped exit=0 (=sed's status)
+
+=== check the doc loaders for a real missing-return bug: memfd_execveat ===
+--- memfd_execveat with a NONEXISTENT payload (open fails, rc unchecked):
+open payload: No such file or directory
+  exit=1
+--- memfd_exec with nonexistent payload (open IS checked):
+open payload: No such file or directory
+  exit=1
+
+--- memfd_execveat with a DIRECTORY as payload:
+read payload: Is a directory
+  exit=1
+
+[exit=0]

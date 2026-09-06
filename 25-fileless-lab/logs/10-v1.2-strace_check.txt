@@ -1,0 +1,35 @@
+===============================================================
+  src/ (v1.2 code) — tests/strace_check.sh
+  2026-09-06T16:53:22Z
+===============================================================
+
+=== strace: which syscall does each loader actually issue? ===
+--- memfd_exec
+execve("./memfd_exec", ["./memfd_exec", "./h_memfd_exec"], 0xffffd30e3570 /* 7 vars */) = 0
+memfd_create("payload", MFD_CLOEXEC)    = 4
+[loader] memfd_create() -> fd 4
+[loader] execve("/proc/self/fd/4", ...)
+execve("/proc/self/fd/4", ["payload"], 0xfffff6963e80 /* 7 vars */) = 0
+--- memfd_execveat
+execve("./memfd_execveat", ["./memfd_execveat", "./h_memfd_execveat"], 0xffffda56dc40 /* 7 vars */) = 0
+openat(AT_FDCWD, "./h_memfd_execveat", O_RDONLY|O_CLOEXEC) = 3
+memfd_create("payload", MFD_CLOEXEC)    = 4
+execveat(4, "", ["payload"], 0xffffe6a087d0 /* 7 vars */, AT_EMPTY_PATH) = 0
+--- tmpfile_exec
+execve("./tmpfile_exec", ["./tmpfile_exec", "./h_tmpfile_exec"], 0xffffeb5a4730 /* 7 vars */) = 0
+openat(AT_FDCWD, "/tmp", O_RDWR|O_EXCL|O_TMPFILE, 0700) = 4
+execveat(3, "", ["payload"], 0xffffcec00450 /* 7 vars */, AT_EMPTY_PATH) = 0
+--- deleted_exec
+execve("./deleted_exec", ["./deleted_exec", "./h_deleted_exec"], 0xffffcb1e8050 /* 7 vars */) = 0
+execveat(3, "", ["payload"], 0xffffe0d80170 /* 7 vars */, AT_EMPTY_PATH) = 0
+
+--- memfd_script
+execve("./memfd_script", ["./memfd_script"], 0xffffc5436a78 /* 7 vars */) = 0
+memfd_create("script", 0)               = 3
+execve("/proc/self/fd/3", ["script"], 0xffffea8cd3b8 /* 7 vars */) = 0
+
+--- interp_oneliner.sh
+memfd_create("payload", 0)              = 3
+execve("/proc/self/fd/3", ["payload"], 0xffffa962a6f0 /* 8 vars */) = 0
+
+[exit=0]

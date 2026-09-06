@@ -1,0 +1,23 @@
+===============================================================
+  src-v1.1-verbatim/ (before the fixes) — tests/edge.sh
+  2026-09-06T16:53:38Z
+===============================================================
+
+=== unchecked return values in each loader (grep the doc source) ===
+memfd_execveat: open rc checked? 0  memfd rc checked? 0
+deleted_exec:   unlink rc checked? 0
+
+=== tmpfile_exec: does removing the close(wfd) really give ETXTBSY? (doc comment claim) ===
+22:    /* close(wfd) REMOVED to test claim */
+fexecve: Text file busy
+  exit=1 (expect ETXTBSY=Text file busy)
+
+=== deleted_exec destroys its input (data-loss bug in doc's for-loop) ===
+  before: victim exists
+hello from a fileless payload
+  after: victim GONE (unlinked by loader)
+
+=== O_TMPFILE on a non-tmpfs dir? /work is overlayfs ===
+overlay on / type overlay (rw,relatime,lowerdir=/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4615/fs:/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4438/fs:/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4437/fs:/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4169/fs,upperdir=/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4616/fs,workdir=/var/lib/desktop-containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/4616/work,nouserxattr)
+
+[exit=0]

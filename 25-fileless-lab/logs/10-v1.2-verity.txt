@@ -1,0 +1,25 @@
+===============================================================
+  src/ (v1.2 code) — tests/verity.sh
+  2026-09-06T16:53:25Z
+===============================================================
+
+=== kernel fs-verity support ===
+# CONFIG_FS_VERITY is not set
+
+=== try the doc's per-binary steps on a real file ===
+--- fsverity enable /work/foo   (fs=overlayfs)
+ERROR: FS_IOC_ENABLE_VERITY failed on '/work/foo': Inappropriate ioctl for device
+  exit=1
+
+--- fsverity sign (needs the digest, key + cert from block 20)
+Signed file '/work/foo' (sha256:3f9eaafd337e78bb3881859ec2bdd88896d13b45cfc877d0c4f2845fd1e84972)
+  exit=0
+-rw-r--r-- 1 root root 218 Sep  6 16:53 foo.p7
+
+--- setfattr user.org.sig
+  exit=0
+getfattr: Removing leading '/' from absolute path names
+# file: work/foo
+user.org.sig=0sMIHXBgkqhkiG9w0BBwKggckwgcYCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwExgaIwgZ8CAQEwNjAeMRwwGgYDVQQDDBNPcmcgQmluYXJ5LUF1dGh6IENBAhQCPgCtinDEgCe55RZHoclAkWiS3TANBglghkgBZQMEAgEFADAKBggqhkjOPQQDAgRHMEUCIQDci9Ru98rMEMwOI0J8YvLulgRtb9GgbVnAjLRsC2DK8AIgPzOIqnEKh3wOZRguWKFYNOUExBzPxbnOSVeLgydlaAs=
+
+[exit=0]

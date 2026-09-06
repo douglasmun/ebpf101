@@ -1,0 +1,21 @@
+===============================================================
+  src/ (v1.2 code) — tests/inode.sh
+  2026-09-06T16:53:18Z
+===============================================================
+
+=== is_anon_exec_inode(): nlink==0 && (TMPFS_MAGIC||HUGETLBFS_MAGIC) ===
+Gate logic (block 19) DENIES 1a/1b/1d at bprm_check, and 1f (O_TMPFILE) only if fs is tmpfs.
+
+--- what filesystem is /tmp in this container?
+path=/tmp fstype=overlayfs magic=4d1d0ba343e19c1b
+--- and where does the doc's tmpfile_exec open O_TMPFILE? -> hardcoded "/tmp"
+11:    int wfd = open("/tmp", O_TMPFILE | O_RDWR | O_EXCL, 0700);  /* unlinked, no name */
+12:    if (wfd < 0) { perror("open O_TMPFILE"); return 1; }
+
+=== run each and report exe-link + nlink of the running inode ===
+  memfd_exec       exe=/memfd:payload (deleted)     nlink=0   fs=tmpfs
+  memfd_execveat   exe=/memfd:payload (deleted)     nlink=0   fs=tmpfs
+  tmpfile_exec     exe=/tmp/#34523312 (deleted)     nlink=0   fs=overlayfs
+  deleted_exec     exe=/work/sd.deleted_exec.75 (deleted) nlink=0   fs=overlayfs
+
+[exit=0]

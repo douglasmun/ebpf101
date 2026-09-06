@@ -1,0 +1,18 @@
+===============================================================
+  src-v1.1-verbatim/ (before the fixes) — tests/final.sh
+  2026-09-06T16:53:37Z
+===============================================================
+
+=== FINAL CONSOLIDATED RUN (all doc code, fresh tree each time) ===
+  PASS  1a memfd_exec (execve /proc/self/fd/N)
+  PASS  1a memfd_execveat (AT_EMPTY_PATH)
+  PASS  1b memfd_script (shebang from memfd)
+  PASS  1d interp_oneliner.sh (python memfd)
+  PASS  1f tmpfile_exec (O_TMPFILE)
+  PASS  4  deleted_exec (unlink+fexecve)
+  PASS  3  staging pipe-to-interpreter
+  PASS  preflight script runs
+
+TOTAL: 8 passed, 0 failed
+
+[exit=0]

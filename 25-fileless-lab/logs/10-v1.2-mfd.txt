@@ -1,0 +1,33 @@
+===============================================================
+  src/ (v1.2 code) — tests/mfd.sh
+  2026-09-06T16:53:18Z
+===============================================================
+
+=== vm.memfd_noexec=0 ===
+  -- MFD flag: none
+    hello from a fileless payload
+  -- MFD flag: exec
+    hello from a fileless payload
+  -- MFD flag: noexec
+      execve: Permission denied
+      memfd_create(flags=0x8) ok fd=3
+=== vm.memfd_noexec=1 ===
+  -- MFD flag: none
+      execve: Permission denied
+      memfd_create(flags=0x0) ok fd=3
+  -- MFD flag: exec
+    hello from a fileless payload
+  -- MFD flag: noexec
+      execve: Permission denied
+      memfd_create(flags=0x8) ok fd=3
+=== vm.memfd_noexec=2 ===
+  -- MFD flag: none
+      execve: Permission denied
+      memfd_create(flags=0x0) ok fd=3
+  -- MFD flag: exec
+    memfd_create: Permission denied
+  -- MFD flag: noexec
+      execve: Permission denied
+      memfd_create(flags=0x8) ok fd=3
+
+[exit=0]

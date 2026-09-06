@@ -1,0 +1,54 @@
+===============================================================
+  summary
+  2026-09-06T16:53:41Z
+===============================================================
+
+v1.2 (src/) — consolidated:
+  PASS  1a memfd_exec (execve /proc/self/fd/N)
+  PASS  1a memfd_execveat (AT_EMPTY_PATH)
+  PASS  1b memfd_script (shebang from memfd)
+  PASS  1d interp_oneliner.sh (python memfd)
+  PASS  1f tmpfile_exec (O_TMPFILE)
+  PASS  4  deleted_exec (unlink+fexecve)
+  PASS  3  staging pipe-to-interpreter
+  PASS  preflight script runs
+TOTAL: 8 passed, 0 failed
+
+v1.1 (src-v1.1-verbatim/) — consolidated:
+  PASS  1a memfd_exec (execve /proc/self/fd/N)
+  PASS  1a memfd_execveat (AT_EMPTY_PATH)
+  PASS  1b memfd_script (shebang from memfd)
+  PASS  1d interp_oneliner.sh (python memfd)
+  PASS  1f tmpfile_exec (O_TMPFILE)
+  PASS  4  deleted_exec (unlink+fexecve)
+  PASS  3  staging pipe-to-interpreter
+  PASS  preflight script runs
+TOTAL: 8 passed, 0 failed
+
+  Note: v1.1 also reports 8/8. final.sh asks 'does the pattern execute?',
+  and the buggy loaders do execute — #1 destroys the caller's file while
+  succeeding, and #2 only changes which error is printed when the payload
+  is missing. The before/after below is where those two show up.
+
+per-test exit codes (v1.2):
+  10-v1.2-detection_lint.txt   [exit=0]
+  10-v1.2-edge.txt             [exit=0]
+  10-v1.2-exit_test.txt        [exit=0]
+  10-v1.2-final.txt            [exit=0]
+  10-v1.2-gate_compile.txt     [exit=0]
+  10-v1.2-inode.txt            [exit=0]
+  10-v1.2-mfd.txt              [exit=0]
+  10-v1.2-noexec_test.txt      [exit=0]
+  10-v1.2-sigma_check.txt      [exit=0]
+  10-v1.2-signing.txt          [exit=0]
+  10-v1.2-strace_check.txt     [exit=0]
+  10-v1.2-ver_test.txt         [exit=0]
+  10-v1.2-verity.txt           [exit=0]
+
+the data-loss fix (#1), before and after:
+  v1.1: after: victim GONE (unlinked by loader)
+  v1.2: after: victim EXISTS
+
+auditd rules that parse (#8):
+  v1.1: 5/7
+  v1.2: 7/7

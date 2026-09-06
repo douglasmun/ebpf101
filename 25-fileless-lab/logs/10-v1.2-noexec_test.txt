@@ -1,0 +1,45 @@
+===============================================================
+  src/ (v1.2 code) — tests/noexec_test.sh
+  2026-09-06T16:53:23Z
+===============================================================
+
+kernel: 7.0.12-linuxkit
+vm.memfd_noexec supported? yes
+=== setting vm.memfd_noexec=0 ===
+    vm.memfd_noexec = 0
+  read back: 0
+  memfd_exec (MFD_CLOEXEC, no MFD_EXEC/NOEXEC_SEAL):
+      [loader] memfd_create() -> fd 4
+      [loader] wrote 704792 ELF bytes into the memfd (nothing on disk)
+      [loader] execve("/proc/self/fd/4", ...)
+      hello from a fileless payload
+      exit=0
+  memfd_script (flags=0):
+      hello from a memfd shebang script
+      exit=0
+=== setting vm.memfd_noexec=1 ===
+    vm.memfd_noexec = 1
+  read back: 1
+  memfd_exec (MFD_CLOEXEC, no MFD_EXEC/NOEXEC_SEAL):
+      [loader] memfd_create() -> fd 4
+      [loader] wrote 704792 ELF bytes into the memfd (nothing on disk)
+      [loader] execve("/proc/self/fd/4", ...)
+      execve: Permission denied
+      exit=0
+  memfd_script (flags=0):
+      execve: Permission denied
+      exit=0
+=== setting vm.memfd_noexec=2 ===
+    vm.memfd_noexec = 2
+  read back: 2
+  memfd_exec (MFD_CLOEXEC, no MFD_EXEC/NOEXEC_SEAL):
+      [loader] memfd_create() -> fd 4
+      [loader] wrote 704792 ELF bytes into the memfd (nothing on disk)
+      [loader] execve("/proc/self/fd/4", ...)
+      execve: Permission denied
+      exit=0
+  memfd_script (flags=0):
+      execve: Permission denied
+      exit=0
+
+[exit=0]

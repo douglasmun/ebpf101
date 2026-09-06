@@ -1,0 +1,27 @@
+===============================================================
+  src-v1.1-verbatim/ (before the fixes) — tests/detection_lint.sh
+  2026-09-06T16:53:38Z
+===============================================================
+
+  PARSES  sigma_deleted_binary_exec.yml
+          condition: deleted_exe
+          omitted (doc excerpt, not a deployable rule): id, status, description, author, date, references
+  PARSES  sigma_fileless_memfd_exec.yml
+          condition: exec_from_memfd
+          omitted (doc excerpt, not a deployable rule): id, status, description, author, date, references
+  PARSES  sigma_payload_piped_to_interpreter.yml
+          condition: interp and parent_fetch
+          omitted (doc excerpt, not a deployable rule): id, status, description, author, date, references
+
+=== auditd rule syntax ===
+  PARSES-OK   -a always,exit -F arch=b64 -S memfd_create -k fileless_memfd  (load blocked: no audit subsystem in container)
+  PARSES-OK   -a always,exit -F arch=b32 -S memfd_create -k fileless_memfd  (load blocked: no audit subsystem in container)
+  PARSES-OK   -a always,exit -F arch=b64 -S execveat -k fileless_fdexec  (load blocked: no audit subsystem in container)
+  PARSES-OK   -a always,exit -F arch=b32 -S execveat -k fileless_fdexec  (load blocked: no audit subsystem in container)
+  PARSES-OK   -a always,exit -F arch=b64 -S init_module -S finit_module -k fileless_lkm  (load blocked: no audit subsystem in container)
+  BAD-SYNTAX  -a always,exit -F arch=b64 -S execve -F exe=/usr/bin/python3 -k interp_exec
+              -> Field option not supported by kernel: exe
+  BAD-SYNTAX  -a always,exit -F arch=b64 -S execve -F exe=/usr/bin/perl    -k interp_exec
+              -> Field option not supported by kernel: exe
+
+[exit=0]

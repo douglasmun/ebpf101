@@ -41,6 +41,7 @@ detection/           blocks 21-24 verbatim from v1.1: auditd rules + 3 Sigma rul
 detection-patched/   the same, with the auditd `-F exe=` fix (#8) that v1.2 ships
 gate/                block 19 verbatim: the eBPF LSM gate (a fragment; does not compile)
 tests/               the harness written for this exercise (not from the document)
+logs/                captured transcript of a full run — start at logs/01-summary.txt
 ```
 
 All findings below were measured against the **unmodified** `src-v1.1-verbatim/`.
@@ -357,6 +358,20 @@ its own header comment.
 
 The corrected auditd rules live in `detection-patched/`; `detection/` still holds
 exactly what v1.1 printed.
+
+**Transcript.** `./capture-logs.sh` runs the whole suite and writes `logs/`, so the
+results are readable without Docker. Capturing it caught a harness bug that had been
+masked all along: `run-tests.sh` hardcoded the `detection/` mount, so `detection_lint.sh`
+linted the *verbatim* rules no matter which source tree was under test. The 7/7 I
+reported earlier came from a one-off run where I mounted `detection-patched/` by hand;
+the committed driver never did. `DET` now tracks `SRC`, and the transcript shows 5/7 for
+v1.1 against 7/7 for v1.2.
+
+Note that both trees report `8 passed, 0 failed` on `final.sh`. That is not a bug in the
+harness: `final.sh` asks whether each pattern executes, and the buggy loaders do execute.
+#1 destroys the caller's file while succeeding and #2 only changes which error is printed
+on a missing payload — neither is a pass/fail failure, which is exactly how both survived
+into a published document. `edge.sh` and `detection_lint.sh` are where they surface.
 
 **Tree layout since the merge.** `src/` and `src-patched/` were collapsed into a single
 `src/` holding the v1.2 code, with the verbatim v1.1 extraction kept as

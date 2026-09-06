@@ -1,0 +1,9 @@
+===============================================================
+  environment
+  2026-09-06T16:53:17Z
+===============================================================
+
+commit:  e186d6801d551d744785eb54a71407dd28b55e65
+docker:  Docker version 29.7.2, build a7dcaa6
+kernel:  Linux c3fcb21cfa19 7.0.12-linuxkit #1 SMP PREEMPT Fri Aug 14 16:27:59 UTC 2026 aarch64 GNU/Linux
+host:    Darwin arm64
