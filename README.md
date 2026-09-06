@@ -41,16 +41,17 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `21-firewall/` | **XDP firewall**: parse to L4 and `XDP_DROP` blocked TCP/UDP ports; rules live in a userspace-filled `blocklist` map (runtime-configurable); safe defaults (`lo` 11111) | C / libbpf | ✅ built |
 | `22-iterator/` | **BPF iterator**: a "pull" program — walk every `task_struct` and print it (a mini `ps`) via `bpf_seq_printf`; `attach_iter` → `bpf_iter_create` → `read()` | C / libbpf | ✅ built |
 | `23-ids/` | **rule-based IDS**: a `SOCKET_FILTER` taps every packet to a ring buffer; userspace runs C2/anomaly rules (beaconing, port-scan, suspicious-port). No ML — readable rules; `bpf_skb_load_bytes` (socket filters get no direct packet access) | C / libbpf | ✅ built |
-| `24-pythonbpf/` | **Python-BPF**: write the *kernel-side* program in pure Python (`@bpf`/`@map`/`@section`), lowered to LLVM IR via `llvmlite` → BPF `.o` → loaded by `pylibbpf`. Same hash-map execve-counter idea as ch02 (keyed on PID here) — "kernel side, three ways" | Python / Python-BPF | ⚠️ pre-1.0 dep, verified in Docker |
+| `24-pythonbpf/` | **Python-BPF**: write the *kernel-side* program in pure Python (`@bpf`/`@map`/`@section`), lowered to LLVM IR via `llvmlite` → BPF `.o` → loaded by `pylibbpf`. Same hash-map execve-counter idea as ch02 (keyed on PID here) — "kernel side, three ways" | Python / Python-BPF | ✅ verified in Docker (pre-1.0 dep) |
 | `25-fileless-lab/` | **fileless execution, tested**: a container lab that builds and runs every listing from a threat-detection note — `memfd_create`+`execve`, `O_TMPFILE`, unlink+`fexecve`, pipe-to-interpreter — and checks the claimed `/proc/PID/exe` artifacts against what the kernel actually reports. | C / shell / Docker | ✅ 8/8 in Docker |
 
 Chapters 1–23 are built **and** run live on this machine. Chapter 24
-(Python-BPF) depends on a pre-1.0 project ("not ready for production use"), so
-it's flagged as a preview — but it **was** run end-to-end (compile → load →
-attach → map read, exit 0) in a privileged Ubuntu container on Docker Desktop's
-kernel-6.12/aarch64 VM, since macOS has no kernel to load it into. Its API was
-pinned by that run, not from docs, and `requirements.txt` pins the exact versions;
-see [`docs/24-pythonbpf.md`](docs/24-pythonbpf.md) for the container recipe and
+(Python-BPF) was also run end-to-end (compile → load → attach → map read, exit 0),
+in a privileged Ubuntu container on Docker Desktop's kernel-6.12/aarch64 VM, since
+macOS has no kernel to load it into. Its dependency is pre-1.0 and its authors call
+it "not ready for production use", so treat the *library* as a preview — the chapter
+itself is verified. Its API was pinned by that run, not from docs, and
+`requirements.txt` pins the exact versions; see
+[`docs/24-pythonbpf.md`](docs/24-pythonbpf.md) for the container recipe and
 caveats (aarch64-only, x86 untested). That chapter also turned up a compiler bug:
 a map lookup used in arithmetic (`(prev or 0) + 1`) compiles cleanly but never
 dereferences the pointer, so the counter silently stops accumulating. The example
