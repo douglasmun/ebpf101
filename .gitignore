@@ -47,6 +47,9 @@ CLAUDE.md
 *~
 .DS_Store
 
-# --- Ch25: the source document is TLP:GREEN and is NOT published in this
-# public repo. It is distributed separately, on a need-to-know basis.
-25-fileless-lab/*.html
+# --- Ch25: the restricted revisions of the source document are NOT published
+# in this public repo. v1.1 and v1.2 are TLP:GREEN with an author need-to-know
+# restriction; they are distributed separately. v1.3 is TLP:CLEAR and is
+# published here, so it is deliberately not matched below.
+25-fileless-lab/*v1.1.html
+25-fileless-lab/*v1.2.html
