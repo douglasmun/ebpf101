@@ -5,10 +5,10 @@
 # floating install — pin to the exact versions you tested and bump deliberately,
 # re-running the example each time (the decorator/import API still moves).
 #
-# Resolve the current versions on PyPI, then pin them, e.g.:
-#   python3 -m pip install pythonbpf pylibbpf
+# The pins below are the versions this chapter was verified against. To move
+# to a newer set, bump them deliberately and re-run the example:
+#   python3 -m pip install -U pythonbpf pylibbpf
 #   python3 -m pip freeze | grep -Ei 'pythonbpf|pylibbpf|llvmlite'
-# and replace the loose specifiers below with the resulting ==X.Y.Z lines.
 #
 # Linux only. NOTE: pylibbpf has NO prebuilt wheels — pip BUILDS it from source
 # via cmake, so you also need these SYSTEM packages before pip will succeed:
@@ -23,6 +23,10 @@
 #
 # Install:  python3 -m pip install -r 24-pythonbpf/requirements.txt
 
-pythonbpf
-pylibbpf
-llvmlite
+pythonbpf==0.1.9
+pylibbpf==0.0.7
+# llvmlite: the exact version used in the verified run was not recorded, so
+# this is left as the upstream constraint (pythonbpf 0.1.9 requires >=0.45)
+# rather than a fabricated pin. Upstream moved to 0.49 on 2026-09-01, after
+# that run. Pin it yourself from `pip freeze` once you have run the example.
+llvmlite>=0.45
