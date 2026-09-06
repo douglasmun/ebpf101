@@ -1,8 +1,13 @@
 # src-v1.1-verbatim/ — the code exactly as v1.1 printed it
 
 Byte-identical to the `<pre>` blocks of
-`Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`
-(kept at the repo root). Nothing here has been corrected.
+`Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`.
+That file is no longer in the working tree; retrieve it with
+
+
+    git show "$(git log --diff-filter=A --format=%H -1 -- Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html)":Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html
+
+Nothing here has been corrected.
 
 This is the before-state. `src/` is the after-state — the code as published in v1.2,
 re-extracted from that document. The diff between the two trees is the evidence for

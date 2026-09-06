@@ -13,8 +13,12 @@ line (#1), a gate/filesystem assumption that does not hold on overlayfs (#3), an
 auditd rules that fail to load at all (#8).
 
 - Tested: 2026-09-06
-- Document: `../Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`
-  (the version audited below; the resulting `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.2.html` now lives in this directory)
+- Document audited: `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`, removed from the working tree after the lab was
+  committed. Retrieve it from history with:
+
+      git show "$(git log --diff-filter=A --format=%H -1 -- Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html)":Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html
+
+  The result of that audit, `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.2.html`, lives in this directory.
 - Test host: Apple Silicon (arm64), Docker 29.7.2
 
 ## Method
