@@ -63,10 +63,10 @@ boot parameter first (`enable-bpf-lsm.sh` + a reboot); done, its exec-audit path
 logs `allow` verdicts live. See [`docs/23-ids.md`](docs/23-ids.md) and
 [`docs/20-lsm.md`](docs/20-lsm.md).
 
-Chapter 25 is the odd one out: it is a **lab that audits a document** rather than
-a new eBPF technique. Every code listing in the accompanying note was built and
-executed in a container, and the corrections that pass surfaced were folded back
-into the note, so the published listings are the tested ones. The document is
+Chapter 25 is the odd one out: it is a **lab on Fileless Execution detection**
+rather than a new eBPF technique. Every code listing in the accompanying note was
+built and executed in a container, and the corrections that pass surfaced were
+folded back into the note, so the published listings are the tested ones. The document is
 published here in both formats, TLP:CLEAR:
 [read it online](https://douglasmun.github.io/ebpf101/25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.html)
 (rendered via GitHub Pages) · [PDF](25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.pdf)
