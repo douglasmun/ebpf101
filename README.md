@@ -42,7 +42,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `22-iterator/` | **BPF iterator**: a "pull" program — walk every `task_struct` and print it (a mini `ps`) via `bpf_seq_printf`; `attach_iter` → `bpf_iter_create` → `read()` | C / libbpf | ✅ built |
 | `23-ids/` | **rule-based IDS**: a `SOCKET_FILTER` taps every packet to a ring buffer; userspace runs C2/anomaly rules (beaconing, port-scan, suspicious-port). No ML — readable rules; `bpf_skb_load_bytes` (socket filters get no direct packet access) | C / libbpf | ✅ built |
 | `24-pythonbpf/` | **Python-BPF**: write the *kernel-side* program in pure Python (`@bpf`/`@map`/`@section`), lowered to LLVM IR via `llvmlite` → BPF `.o` → loaded by `pylibbpf`. Same hash-map execve-counter idea as ch02 (keyed on PID here) — "kernel side, three ways" | Python / Python-BPF | ⚠️ pre-1.0 dep, verified in Docker |
-| `25-fileless-lab/` | **fileless execution, tested**: a container lab that builds and runs every listing from a threat-detection note — `memfd_create`+`execve`, `O_TMPFILE`, unlink+`fexecve`, pipe-to-interpreter — and checks the claimed `/proc/PID/exe` artifacts against what the kernel actually reports. Found 8 defects in the published code | C / shell / Docker | ✅ 8/8 in Docker |
+| `25-fileless-lab/` | **fileless execution, tested**: a container lab that builds and runs every listing from a threat-detection note — `memfd_create`+`execve`, `O_TMPFILE`, unlink+`fexecve`, pipe-to-interpreter — and checks the claimed `/proc/PID/exe` artifacts against what the kernel actually reports. | C / shell / Docker | ✅ 8/8 in Docker |
 
 Chapters 1–23 are built **and** run live on this machine. Chapter 24
 (Python-BPF) depends on a pre-1.0 project ("not ready for production use"), so
