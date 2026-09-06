@@ -345,6 +345,7 @@ Fixed in the v1.2 listings:
 | #1 | `deleted_exec` unlinked `argv[1]`, destroying the caller's file | execs a private copy; `edge.sh` reports `after: victim EXISTS` |
 | #2 | `memfd_execveat` checked no return values | checks `open`/`memfd_create`/`read`, matching `memfd_exec.c` |
 | #7 | dead `pass=0` in the preflight script | removed |
+| #8 | 2 of 7 auditd rules used `-F exe=`, rejected at parse time | `-F path=`; `detection_lint.sh` now reports 7/7 `PARSES-OK` |
 
 **Correction.** I first reported all four of these as applied to v1.2. #7 was not — the
 HTML still read `pass=0; hard_fail=0`. It was caught when the two source trees were
@@ -353,7 +354,6 @@ matched, three did not, and the preflight script was one of them. Only #1, #2 an
 actually reached the HTML. #7 is applied now, and `src/` is verified byte-identical to
 all ten listings in v1.2. The lesson is that "I edited the file" is not evidence the edit
 landed; diffing the artifact against the tree is.
-| #8 | 2 of 7 auditd rules used `-F exe=`, rejected at parse time | `-F path=`; `detection_lint.sh` now reports 7/7 `PARSES-OK` |
 
 Both `deleted_exec.c` listings were patched — the narrative one in §4A.3 as well as the
 Appendix B copy. The narrative version is the one a reader actually runs first, so
@@ -399,3 +399,54 @@ the corrected rules classified all seven as `BAD-SYNTAX`. That was my classifier
 on "Operation not permitted" — which is the netlink *load* failing for want of an audit
 subsystem in the container, not a parse error. `tests/detection_lint.sh` already draws
 that distinction correctly and reports 7/7.
+
+---
+
+## v1.3 layout fix (07 Sep 2026)
+
+v1.3 is v1.2 re-marked **TLP:CLEAR** and is the revision published in this repo, in
+HTML and PDF. Re-marking it made the HTML a page people actually open in a browser
+rather than a file passed around, which surfaced a rendering defect the earlier passes
+had no reason to look for.
+
+**Symptom.** On the rendered page, body text, tables and code blocks spilled past the
+white A4 sheet onto the grey background, and the document scrolled horizontally.
+
+**Cause.** The document ships a `<doc-page>` web component whose shadow DOM wraps the
+page in a table, `.frame`, styled `width: 100%` under the default `table-layout: auto`.
+Auto layout treats `width` as a preference that a wide intrinsic child can override: a
+figure image with `naturalWidth: 1200` raised the table's min-content width and
+stretched the frame to 988px inside a 794px (210mm) sheet. Every slotted block then sat
+at the same 257px offset — 406 elements overflowing by an identical amount, which is
+what pointed at the wrapper rather than at any individual block.
+
+**Fix.** `table-layout: fixed` on `.frame`, which pins it to the sheet's content box
+(794 - 2x86.4 = 621px) and lets the image scale down to fit.
+
+Measured headless (Chrome via puppeteer-core) against the live Pages URL after deploy:
+
+| | Before | After |
+|---|---|---|
+| `.frame` width | 988px | 621px |
+| Overflowing elements | 406 | 0 |
+| Document h-scroll | yes | no |
+
+Nothing was lost to the narrower frame: 0 clipped elements, all 28 `<pre>` blocks and
+all 10 tables intact at 621px, and the Appendix G column ratios unchanged (G.2 at
+34/11/55, G.3 at 7/46.5/46.5). Checked on a mobile-width viewport as well - the fix
+caps the frame at the sheet's content box, whatever that shrinks to.
+
+The committed v1.3 PDF was printed before this fix and is unaffected: at print size the
+sheet is the paper, and the image is bounded by `img { max-width: 100% }` against the
+page box rather than against a table cell, so auto layout never had a wide child to
+widen. It was not re-printed.
+
+**Process note.** My first diagnosis was wrong and worth recording, because it repeats
+finding #7's lesson. I found `<script src="doc-page.js">` 404ing and concluded the
+component had never upgraded. It had - the real definition is in a `src`-less `<script>`
+later in the file, and the 404ing tags are documentation examples whose bodies are
+escaped. Measuring the live DOM (`upgraded: true`, `sizeAttr: "a4"`) killed that theory
+before it reached a fix. The earlier G.2/G.3 column work in this same document failed
+the same way: I tested a standalone extract of the two tables, which bypassed the
+rendering pipeline that strips `<colgroup>`. Verifying against something other than the
+real artifact is the recurring error in this lab.
