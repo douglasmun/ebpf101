@@ -8,8 +8,9 @@ workflow, the XDP and tc datapath, tail calls, LSM BPF (policy enforcement), BPF
 iterators, and two applied capstones the tutorial never reaches: an XDP firewall and a
 rule-based intrusion-detection system, drawn respectively from a Columbia EECS6891
 lecture (Yannis Zarkadas, Spring 2024) and a research paper
-([arXiv:2102.09980](https://arxiv.org/abs/2102.09980)). All 23 chapters are built
-**and** run live on this machine; every program is written to be read.
+([arXiv:2102.09980](https://arxiv.org/abs/2102.09980)). Chapters 1–23 are built **and**
+run live on this machine; 24 and 25 are verified in containers. Every program is
+written to be read.
 
 📓 **Learning notes:** [`docs/`](docs/README.md) — the *why* behind each chapter and
 what our actual runs revealed. The code is the *how*; the notes are the *why*.
@@ -73,7 +74,8 @@ published here in both formats, TLP:CLEAR:
 (rendered via GitHub Pages) · [PDF](25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.pdf)
 · [HTML source](25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.html).
 The findings, the before/after source trees and the full run transcripts are in
-[`25-fileless-lab/FINDINGS.md`](25-fileless-lab/FINDINGS.md).
+[`25-fileless-lab/FINDINGS.md`](25-fileless-lab/FINDINGS.md), which also serves as
+this chapter's entry in [`docs/`](docs/README.md).
 
 ## Running an example
 
