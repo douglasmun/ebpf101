@@ -3,10 +3,14 @@
 Byte-identical to the `<pre>` blocks of
 `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`.
 
-That document is TLP:GREEN with an author-imposed need-to-know restriction and is
-**not published in this repository** — not in the tree and not in its history. Ask
-the author if you need a copy. These files are the extracted code, which carries no
-such restriction, so the before/after comparison below stands on its own.
+That revision is TLP:GREEN with an author-imposed need-to-know restriction and is
+**not published in this repository** — not in the tree and not in its history. Its
+successor **v1.3 is TLP:CLEAR and is published here**, in HTML and PDF, and carries
+the same technical content; read that unless you specifically need the pre-fix text.
+
+These files are the extracted v1.1 code, which carries no sharing restriction, so
+the before/after comparison below stands on its own — and since v1.1 itself is not
+in this repo, this directory is the only record of what the original listings did.
 
 Nothing here has been corrected.
 

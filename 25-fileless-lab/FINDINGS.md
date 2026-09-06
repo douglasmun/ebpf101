@@ -15,9 +15,9 @@ auditd rules that fail to load at all (#8).
 - Tested: 2026-09-06
 - Document audited: `Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.1.html`,
   and the result of that audit, the same document at v1.2. **Neither is in this
-  repository.** The document is TLP:GREEN with an author-imposed need-to-know
-  restriction, so it is not published here; it is distributed separately. Ask the
-  author if you need a copy.
+  repository** — both are TLP:GREEN with an author-imposed need-to-know restriction.
+  They are superseded by **v1.3, which is TLP:CLEAR and published here** in HTML and
+  PDF with the same technical content.
 
   Everything the document contained that this lab exercises is reproduced here as
   source: `src-v1.1-verbatim/` is the code exactly as v1.1 printed it, and `src/` is
