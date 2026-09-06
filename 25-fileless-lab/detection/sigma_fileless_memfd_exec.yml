@@ -1,0 +1,10 @@
+title: Fileless Execution via memfd (create then exec)
+logsource: { product: linux, category: process_creation }
+detection:
+  exec_from_memfd:
+    Image|contains: 'memfd:'          # process running from /memfd:<name> (deleted)
+  condition: exec_from_memfd
+falsepositives:
+  - runc self-clone (Image 'memfd:runc_cloned:/proc/self/exe'; runc ≤1.1.x, or rootless/fallback path on ≥1.2.0) — allow-list by parent
+level: high
+tags: [attack.defense-evasion, attack.t1620]

@@ -24,6 +24,16 @@ vmlinux.h
 22-iterator/taskdump
 23-ids/ids
 
+# --- Ch25 fileless lab: built inside the container, never on the host ---
+# Both source trees (src/ and src-v1.1-verbatim/) build the same 7 targets.
+25-fileless-lab/*/hello
+25-fileless-lab/*/sleeper
+25-fileless-lab/*/memfd_exec
+25-fileless-lab/*/memfd_execveat
+25-fileless-lab/*/memfd_script
+25-fileless-lab/*/tmpfile_exec
+25-fileless-lab/*/deleted_exec
+
 # --- Python (BCC chapters 1–6) ---
 __pycache__/
 *.pyc

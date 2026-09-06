@@ -1,0 +1,15 @@
+## 1a/1b/1d — anonymous in-memory file creation (the memfd primitive)
+-a always,exit -F arch=b64 -S memfd_create -k fileless_memfd
+-a always,exit -F arch=b32 -S memfd_create -k fileless_memfd
+
+## 1a/1f/4 — execution by file descriptor (execveat AT_EMPTY_PATH, fexecve);
+## catches memfd / O_TMPFILE / deleted-file exec that leaves no path in argv (F-9)
+-a always,exit -F arch=b64 -S execveat -k fileless_fdexec
+-a always,exit -F arch=b32 -S execveat -k fileless_fdexec
+
+## 5a/5b — kernel module load from memory or fd
+-a always,exit -F arch=b64 -S init_module -S finit_module -k fileless_lkm
+
+## 3 — interpreters (scope to your set; correlation is better in the SIEM — see D.2)
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/python3 -k interp_exec
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/perl    -k interp_exec

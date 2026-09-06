@@ -1,0 +1,12 @@
+title: Downloaded or Decoded Payload Piped to an Interpreter
+logsource: { product: linux, category: process_creation }
+detection:
+  interp:
+    Image|endswith: ['/bash', '/sh', '/python3', '/perl', '/ruby']
+  parent_fetch:
+    ParentImage|endswith: ['/curl', '/wget', '/base64', '/openssl']
+  condition: interp and parent_fetch  # staging (pattern 3); file identity can't help (F-4)
+falsepositives:
+  - Legitimate installers and CI scripts that pipe to a shell
+level: medium
+tags: [attack.execution, attack.t1059, attack.t1105]

@@ -1,0 +1,107 @@
+/* Signed buffer layout, SHA-256:
+ *   [0..8)   "FSVerity"                                    (magic, filled by user space)
+ *   [8..12)  struct fsverity_digest {u16 algo; u16 size}   (filled by kfunc)
+ *   [12..44) raw digest[32]                                (filled by kfunc)
+ * bpf_get_fsverity_digest() writes [8..44); the program signs/verifies [0..44). */
+#define MAGIC_SZ 8
+#define FSV_DIG_SZ 4            /* sizeof(struct fsverity_digest) — verified */
+#define SHA256_SZ 32
+static const char FSV_MAGIC[MAGIC_SZ] = "FSVerity";
+
+/* Keyring selector for bpf_lookup_system_key() (kernel 6.1+):
+ *   0 = builtin keyring only; 1 = VERIFY_USE_SECONDARY_KEYRING (builtin + secondary);
+ *   2 = VERIFY_USE_PLATFORM_KEYRING. The signing pipeline below enrols the leaf
+ *   signer into .secondary_trusted_keys, so the verifier MUST select 1 — selecting 0
+ *   would fail every verify (§5.6). Use 0 only if the org CA is
+ *   compiled into the kernel (CONFIG_SYSTEM_TRUSTED_KEYS). */
+#define KEYRING_SEL 1
+
+/* Verdict cache (F-10): content-safe because fs-verity inodes are immutable,
+ * policy-safe only because the epoch is compared on every hit. */
+struct verdict { __u8 approved; __u32 epoch; };
+static __always_inline __u32 current_epoch(void)
+{
+    __u32 k = 0;
+    __u32 *e = bpf_map_lookup_elem(&policy, &k);   /* BPF_MAP_TYPE_ARRAY, 1 entry */
+    return e ? *e : 0;
+}
+
+static __always_inline int verify_file(struct file *f)
+{
+    __u32 epoch = current_epoch();
+    struct verdict *v = bpf_inode_storage_get(&verdict_map, f->f_inode, 0, 0);
+    if (v && v->approved && v->epoch == epoch)
+        return 0;                                  /* cached AND still current (F-10) */
+    /* stale epoch (key revoked, deny-list or policy changed) → fall through and re-verify */
+
+    __u8 buf[MAGIC_SZ + FSV_DIG_SZ + SHA256_SZ];
+    __u8 sbuf[MAX_SIG];
+    struct bpf_dynptr dp, sp;
+
+    __builtin_memcpy(buf, FSV_MAGIC, MAGIC_SZ);    /* prepend magic */
+    bpf_dynptr_from_mem(buf + MAGIC_SZ, FSV_DIG_SZ + SHA256_SZ, 0, &dp);
+    if (bpf_get_fsverity_digest(f, &dp))           /* ENODATA on overlay/squashfs (F-7) */
+        return -EPERM;
+    bpf_dynptr_from_mem(buf, sizeof(buf), 0, &dp); /* re-cover full 44B for the verify */
+
+    bpf_dynptr_from_mem(sbuf, sizeof(sbuf), 0, &sp);
+    int slen = bpf_get_file_xattr(f, TAG_XATTR, &sp);   /* user.org.sig | security.bpf.sig */
+    if (slen < 0) return -EPERM;
+    bpf_dynptr_adjust(&sp, 0, slen);
+
+    struct bpf_key *kr = bpf_lookup_system_key(KEYRING_SEL); /* builtin + secondary (§5.6) */
+    if (!kr) return -EPERM;
+    int ret = bpf_verify_pkcs7_signature(&dp, &sp, kr);
+    bpf_key_put(kr);
+    if (ret) return -EPERM;
+
+    struct verdict nv = { .approved = 1, .epoch = epoch };
+    v = bpf_inode_storage_get(&verdict_map, f->f_inode, &nv, BPF_LOCAL_STORAGE_GET_F_CREATE);
+    if (v) { v->approved = 1; v->epoch = epoch; }  /* refresh an existing stale entry */
+    return 0;
+}
+
+static __always_inline bool is_anon_exec_inode(struct inode *ino)
+{
+    __u64 m = ino->i_sb->s_magic;                  /* tmpfs OR hugetlbfs (F-9) */
+    return ino->i_nlink == 0 && (m == TMPFS_MAGIC || m == HUGETLBFS_MAGIC);
+}
+
+SEC("lsm.s/bprm_check_security")
+int BPF_PROG(exec_gate, struct linux_binprm *bprm)
+{
+    struct file *f = bprm->file;                   /* verifier-trusted, fully opened */
+    if (is_anon_exec_inode(f->f_inode))
+        return -EPERM;                             /* rows 1a/1b/1d */
+    return verify_file(f);                         /* rows 1f/4: unlinked real-fs inode must still verify */
+}
+
+SEC("lsm.s/mmap_file")
+int BPF_PROG(mmap_gate, struct file *f, unsigned long reqprot,
+             unsigned long prot, unsigned long flags)
+{
+    if (!(prot & PROT_EXEC)) return 0;
+    if (!f) return DENY_ANON_EXEC ? -EPERM : 0;    /* row 6; DENY_ANON_EXEC breaks JITs — policy flag */
+    if (is_anon_exec_inode(f->f_inode)) return -EPERM;   /* row 1e */
+    return verify_file(f);                         /* every PROT_EXEC mapping under policy must be signed (§1) */
+}
+
+/* Self-protection (T-B, §5.6) — PSEUDOCODE, deliberately not compilable as-is.
+ * Current lsm_hook_defs.h declares the coarse hook as
+ *   bpf(int cmd, union bpf_attr *attr, unsigned int size, bool kernel)
+ * (four arguments; `kernel` is set for in-kernel callers) and also exposes
+ * finer-grained hooks — bpf_map_create, bpf_prog_load, bpf_token_create,
+ * bpf_token_cmd — which are the better attachment points on current kernels.
+ * Re-derive the exact prototypes from the target kernel's BTF before building. */
+SEC("lsm/bpf")
+int BPF_PROG(guard_bpf, int cmd, union bpf_attr *attr, unsigned int size, bool kernel)
+{
+    if (kernel) return 0;                          /* in-kernel callers are not the T-B threat */
+    if (!task_is_verified_agent() &&
+        (cmd == BPF_LINK_DETACH || cmd == BPF_PROG_LOAD || cmd == BPF_LINK_UPDATE ||
+         cmd == BPF_TOKEN_CREATE))
+        return -EPERM;
+    return 0;
+}
+/* Preferred on current kernels: attach to lsm/bpf_prog_load and lsm/bpf_token_create
+ * and deny from any task that is not the verified agent; see DET-11. */

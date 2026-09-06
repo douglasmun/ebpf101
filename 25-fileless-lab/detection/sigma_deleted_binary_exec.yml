@@ -1,0 +1,10 @@
+title: Process Executing from a Deleted Binary
+logsource: { product: linux, category: process_creation }
+detection:
+  deleted_exe:
+    Image|endswith: '(deleted)'       # unlinked after/at exec — patterns 1f / 4
+  condition: deleted_exe
+falsepositives:
+  - Self-updating software during the brief post-upgrade window
+level: medium
+tags: [attack.defense-evasion, 'attack.t1070.004']
