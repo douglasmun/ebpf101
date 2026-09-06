@@ -39,8 +39,8 @@ __pycache__/
 *.pyc
 
 # --- Machine-local Claude Code settings ---
+# (CLAUDE.md itself is tracked — it carries the repo's conventions.)
 .claude/settings.local.json
-CLAUDE.md
 
 # --- Editor / OS cruft ---
 *.swp
