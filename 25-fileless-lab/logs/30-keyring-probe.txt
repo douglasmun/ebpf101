@@ -1,0 +1,56 @@
+===============================================================
+  src/ (v1.2 code) — tests/keyring_probe.sh
+  2026-09-14T15:19:14Z
+  keyring-staged fileless execution — feasibility probe (no payload executed)
+===============================================================
+
+=== environment ===
+Linux 7.0.12-linuxkit aarch64
+quota-maxbytes: 700000
+quota-maxkeys:  10000
+root-maxbytes:  25000000
+uid:            0
+
+=== Q1: is the big_key type present? (CONFIG_BIG_KEYS) ===
+CONFIG_BIG_KEYS not set
+
+=== Q0/Q3: does add_key/keyctl work, as root and as a normal uid? ===
+  NOTE: Docker's DEFAULT seccomp profile blocks add_key (EPERM even as uid 0).
+        run-tests.sh passes --security-opt seccomp=unconfined for this probe.
+  -- as uid 0
+      add_key(type=user, 4096 bytes) ok serial=93447790
+      KEYCTL_READ(probe) reports 4096 bytes
+      KEYCTL_READ(copy)  returned 4096 bytes, content INTACT
+      KEYCTL_REVOKE ok
+  -- as uid 65534 (nobody): does the technique need privilege?
+      add_key(type=user, 4096 bytes) ok serial=665602752
+      KEYCTL_READ(probe) reports 4096 bytes
+      KEYCTL_READ(copy)  returned 4096 bytes, content INTACT
+      KEYCTL_REVOKE ok
+
+=== Q2: how large a payload fits? ===
+  static ./hello is 704792 bytes
+  user: max payload = 32767 bytes (at 32768: Invalid argument)
+  big_key: even 1 byte fails: No such device
+  VERDICT-Q2: static hello (704792 B) EXCEEDS the user-key ceiling (32767 B).
+              A keyring loader here needs big_key, a smaller/dynamic payload,
+              or the payload split across multiple keys.
+
+=== Q4: does the key survive the dropper's exit? (cross-process staging) ===
+  add_key(type=user, 4096 bytes) ok serial=932426918
+  KEYCTL_READ(probe) reports 4096 bytes
+  KEYCTL_READ(copy)  returned 4096 bytes, content INTACT
+  serial=932426918 left in session keyring (no revoke)
+  dropper exited; reading serial=932426918 from a new process
+  post-exit read ok: 4096 bytes still in slab
+
+=== Q5: /proc/keys visibility, live then revoked ===
+  bytes readable from /proc/keys: 0
+  (an empty /proc/keys is a CONTAINER effect - the rows appear only with
+   --privileged. Under default caps the file reads as 0 bytes even when a
+   live key exists with a valid serial.)
+    serial=932426918
+    LIVE     (no _dntry row)
+    REVOKED  (no _dntry row)
+
+=== probe complete - no payload was executed ===

@@ -44,6 +44,7 @@ what our actual runs revealed. The code is the *how*; the notes are the *why*.
 | `23-ids/` | **rule-based IDS**: a `SOCKET_FILTER` taps every packet to a ring buffer; userspace runs C2/anomaly rules (beaconing, port-scan, suspicious-port). No ML — readable rules; `bpf_skb_load_bytes` (socket filters get no direct packet access) | C / libbpf | ✅ built |
 | `24-pythonbpf/` | **Python-BPF**: write the *kernel-side* program in pure Python (`@bpf`/`@map`/`@section`), lowered to LLVM IR via `llvmlite` → BPF `.o` → loaded by `pylibbpf`. Same hash-map execve-counter idea as ch02 (keyed on PID here) — "kernel side, three ways" | Python / Python-BPF | ✅ verified in Docker (pre-1.0 dep) |
 | `25-fileless-lab/` | **fileless execution, tested**: a container lab that builds and runs every listing from a threat-detection note — `memfd_create`+`execve`, `O_TMPFILE`, unlink+`fexecve`, pipe-to-interpreter — and checks the claimed `/proc/PID/exe` artifacts against what the kernel actually reports. | C / shell / Docker | ✅ 8/8 in Docker |
+| `26-keyring-detect/` | **detecting keyring-staged fileless exec**: an eBPF `fentry` + tracepoint monitor on the `add_key` path that catches ELF staging in the kernel keyring — the technique ch25's exec/memfd rules structurally miss. Ships a compile-only `lsm/key_alloc` denial variant. | C / libbpf / Docker | ✅ verified in Docker (LSM path compile-only) |
 
 Chapters 1–23 are built **and** run live on this machine. Chapter 24
 (Python-BPF) was also run end-to-end (compile → load → attach → map read, exit 0),

@@ -450,3 +450,50 @@ before it reached a fix. The earlier G.2/G.3 column work in this same document f
 the same way: I tested a standalone extract of the two tables, which bypassed the
 rendering pipeline that strips `<colgroup>`. Verifying against something other than the
 real artifact is the recurring error in this lab.
+
+---
+
+## Keyring-staged fileless execution — feasibility probe (14 Sep 2026)
+
+Prompted by [matheuzsecurity, "Linux Kernel Keyring Fileless
+Exec"](https://matheuzsecurity.github.io/hacking/linux-kernel-keyring-fileless-exec/),
+which stages an ELF in the kernel keyring (`add_key`), reads it back into an anonymous
+mapping (`keyctl(KEYCTL_READ)`), hand-maps its `PT_LOAD` segments and jumps to the entry
+point — **no `execve`, no `execveat`, no `memfd_create`, no file descriptor, no inode.**
+This is a class of fileless execution the chapter's detection set does not cover: every
+auditd rule keys on `memfd_create`/`execveat`/`init_module`/`execve`, and both Sigma
+rules key on the `memfd:` or `(deleted)` string in `/proc/PID/exe` — none of which the
+keyring chain produces.
+
+Before writing any loader, `tests/keyring_probe.sh` measures whether the staging
+primitive is even reproducible here and what its limits are. **No payload is executed by
+the probe.** Full transcript: `logs/30-keyring-probe.txt`.
+
+Container kernel `7.0.12-linuxkit aarch64`, `debian:trixie-slim`.
+
+| # | Question | Measured result |
+|---|---|---|
+| Q0 | Does the runtime allow `add_key`? | **No, by default.** Docker's default seccomp profile returns `EPERM` on `add_key` **even as uid 0**. `--security-opt seccomp=unconfined` is the minimum that lets it through; `run-tests.sh` passes it for this test only. |
+| Q1 | Is `big_key` (1 MB) available? | **No.** `CONFIG_BIG_KEYS` not set; `add_key(type=big_key)` fails `ENODEV` at any size. |
+| Q2 | How large a payload fits? | **32767 bytes** for the `user` type (bisected; 32768 → `EINVAL`). Static `./hello` is **704792 bytes — 21.5x the 32767 ceiling.** A loader here would need a payload under 32 KB, a split across keys, or `big_key` (absent). |
+| Q3 | Does it need privilege? | **No.** Once seccomp permits the syscall, `add_key`/`keyctl(READ)`/`keyctl(REVOKE)` all succeed as `nobody` (uid 65534), payload read back intact. |
+| Q4 | Does the key outlive the dropper? | **Yes.** A key left in `KEY_SPEC_SESSION_KEYRING` by a process that then exits is still readable by a separate process — cross-process staging works, as the article claims. |
+| Q5 | What does `/proc/keys` show? | **Nothing, in this container.** `/proc/keys` reads as 0 bytes under default caps even with a live key holding a valid serial; the `user _dntry: N` row (flags `I--Q---`) appears **only with `--privileged`**. This is a container/capability effect, not a property of the technique. The article's `IR-Q---`-after-revoke transition could not be observed because the pre-revoke row is not visible either. |
+
+**What this establishes.** The staging primitive is real, unprivileged, and survives the
+dropper — but on *this* host it is capped at 32 KB, which a static payload blows past, and
+its most-cited detection surface (`/proc/keys`) is invisible from inside a default
+container. So the interesting detection question is not "watch `/proc/keys`" but "watch
+`add_key`/`keyctl` at the syscall boundary," which is exactly where an eBPF program (LSM
+`key_alloc`/`key_permission`, or a tracepoint on `sys_enter_add_key`) reaches and auditd's
+current rule set does not.
+
+**Not done, deliberately.** No loader was written. The article's loader is x86-64 (it
+builds the x86-64 ABI stack and zeroes registers, relying on `rdx=0` for glibc's
+`rtld_fini`); porting the entry trampoline to AArch64 is real work, and the Q2 ceiling
+means a working demo here needs a sub-32 KB static payload first. Whether that becomes its
+own chapter — paired with the eBPF detection it motivates — is left open; this probe is
+the measured input to that decision, not the decision.
+
+**Reproduce:** `./run-tests.sh keyring_probe.sh` (adds `seccomp=unconfined`; run under
+`--privileged` by hand to see the `/proc/keys` rows).
