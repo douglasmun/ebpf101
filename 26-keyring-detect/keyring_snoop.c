@@ -26,10 +26,12 @@
 /* An ELF header is 64 bytes; anything staged above this in a user key is worth
  * a second look. Small enough to catch a tiny loader, large enough to skip the
  * kilobyte-scale credential keys the system creates constantly. */
-static unsigned suspicious_bytes = 4096;
+static __u64 suspicious_bytes = 4096;
 static volatile sig_atomic_t stop;
 static void on_signal(int sig) { (void)sig; stop = 1; }
 
+/* e->type is always a NUL-terminated C string: the BPF side pre-zeros it and the
+ * bpf_core_read*_str helpers bound and terminate. Safe to strcmp directly. */
 static int is_stageable_type(const char *t)
 {
     return strcmp(t, "user") == 0 || strcmp(t, "big_key") == 0;
@@ -45,7 +47,7 @@ static int handle_event(void *ctx, void *data, size_t len)
                      is_stageable_type(e->type) &&
                      e->datalen >= suspicious_bytes;
 
-    printf("%-6s pid=%-7u uid=%-6u type=%-8s len=%-8u %-20s%s\n",
+    printf("%-6s pid=%-7u uid=%-6u type=%-8s len=%-8llu %-20s%s\n",
            src, e->pid, e->uid,
            e->type[0] ? e->type : "-",
            e->datalen,
@@ -57,14 +59,24 @@ static int handle_event(void *ctx, void *data, size_t len)
 
 int main(int argc, char **argv)
 {
-    if (argc > 1)
-        suspicious_bytes = (unsigned)strtoul(argv[1], NULL, 0);
+    if (argc > 1) {
+        char *end;
+        errno = 0;
+        unsigned long long v = strtoull(argv[1], &end, 0);
+        if (end == argv[1] || *end != '\0' || errno == ERANGE) {
+            fprintf(stderr, "usage: %s [min-bytes]  (a non-negative integer)\n",
+                    argv[0]);
+            return 1;
+        }
+        suspicious_bytes = v;
+    }
 
     libbpf_set_print(NULL);
 
     struct keyring_snoop_bpf *skel = keyring_snoop_bpf__open_and_load();
     if (!skel) {
         fprintf(stderr, "open/load skeleton failed: %s\n", strerror(errno));
+        fprintf(stderr, "  (need a BTF kernel and CAP_BPF; run as root)\n");
         return 1;
     }
     /*
@@ -76,17 +88,21 @@ int main(int argc, char **argv)
      * runs on fentry alone. Bulk keyring_snoop_bpf__attach() would abort on the
      * first failure, which is exactly the wrong behaviour here.
      */
-    if (!bpf_program__attach(skel->progs.on_key_create)) {
-        fprintf(stderr, "fentry attach failed: %s\n", strerror(errno));
+    struct bpf_link *l = bpf_program__attach(skel->progs.on_key_create);
+    long err = libbpf_get_error(l);
+    if (err) {
+        fprintf(stderr, "fentry attach failed: %s\n", strerror(-err));
         fprintf(stderr, "  (fentry needs a BTF kernel; run as root)\n");
         keyring_snoop_bpf__destroy(skel);
         return 1;
     }
-    if (!bpf_program__attach(skel->progs.on_sys_add_key))
+    l = bpf_program__attach(skel->progs.on_sys_add_key);
+    err = libbpf_get_error(l);
+    if (err)
         fprintf(stderr,
                 "note: tracepoint sys_enter_add_key unavailable (%s) — "
                 "audit-parity view off, fentry detector still active. "
-                "Mount tracefs to enable it.\n", strerror(errno));
+                "Mount tracefs to enable it.\n", strerror(-err));
 
     struct ring_buffer *rb =
         ring_buffer__new(bpf_map__fd(skel->maps.events), handle_event, NULL, NULL);
@@ -98,7 +114,7 @@ int main(int argc, char **argv)
 
     signal(SIGINT, on_signal);
     signal(SIGTERM, on_signal);
-    printf("watching key creation (add_key); flag >= %u bytes in user/big_key. Ctrl-C to stop.\n",
+    printf("watching key creation (add_key); flag >= %llu bytes in user/big_key. Ctrl-C to stop.\n",
            suspicious_bytes);
     printf("%-6s %-11s %-10s %-13s %-20s\n", "src", "pid", "uid", "type/len", "description");
 

@@ -13,14 +13,14 @@
  * ch23.
  *
  * `source` says which hook produced the record:
- *   0  fentry/__key_create_or_update  — datalen and type are fully populated
+ *   0  fentry/key_create_or_update    — type and payload length (plen) in hand
  *   1  tracepoint/sys_enter_add_key   — the audit-parity view (syscall args)
  */
 struct key_event {
     __u64 ts_ns;
     __u32 pid;
     __u32 uid;
-    __u32 datalen;            /* payload size in bytes — the field auditd discards */
+    __u64 datalen;            /* payload size in bytes — the field auditd discards */
     __u8  source;
     char  comm[COMM_LEN];
     char  type[TYPE_LEN];     /* "user", "big_key", ... ("" for the tracepoint) */

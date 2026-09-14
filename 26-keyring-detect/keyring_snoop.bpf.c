@@ -14,10 +14,10 @@
  *
  * Two hooks, one ring buffer:
  *
- *   1. fentry/__key_create_or_update  (source=0, the real detector)
- *      Runs inside add_key's kernel path with struct key already allocated and
- *      preparsed, so type->name and datalen are populated — we can report that a
- *      704 KB blob was staged as a "user" key, which is the signal that matters.
+ *   1. fentry/key_create_or_update  (source=0, the real detector)
+ *      Runs inside add_key's kernel path with the key type and payload length
+ *      (plen) as arguments in hand — we can report that a 704 KB blob was staged
+ *      as a "user" key, which is the signal that matters.
  *      Plain fentry: needs BTF, not BPF-LSM, so it attaches on any modern CO-RE
  *      kernel. It CANNOT deny (fentry is observe-only) — see the LSM variant in
  *      keyring_snoop.lsm.bpf.c for the enforcement path.
@@ -78,7 +78,9 @@ int BPF_PROG(on_key_create, unsigned long keyring_ref, const char *type,
 
     fill_ids(e);
     e->source  = 0;
-    e->datalen = (__u32)plen;
+    e->datalen = plen;
+    /* pre-zero so a failed/absent read still leaves a NUL-terminated C string
+     * for userspace strcmp; bpf_core_read*_str also bounds+terminates. */
     e->type[0] = '\0';
     e->desc[0] = '\0';
     if (type)
@@ -104,7 +106,7 @@ int on_sys_add_key(struct trace_event_raw_sys_enter *ctx)
 
     fill_ids(e);
     e->source  = 1;
-    e->datalen = (__u32)ctx->args[3];      /* plen */
+    e->datalen = (__u64)ctx->args[3];      /* plen */
     e->type[0] = '\0';
     e->desc[0] = '\0';
     bpf_core_read_user_str(&e->type, sizeof(e->type), (const char *)ctx->args[0]);

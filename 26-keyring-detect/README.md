@@ -40,25 +40,25 @@ sudo ./keyring_snoop 65536   # only flag payloads that could hold a real binary
 
 ## Why this hook, and why not LSM
 
-`security_key_alloc` is a real LSM hook, and `bpf_lsm_key_alloc` is present in
-this kernel's BTF — so an `lsm/key_alloc` program that returns `-EPERM` could
+`security_key_alloc` is a real LSM hook with a `bpf_lsm_key_alloc` BTF stub on a
+BPF-LSM kernel, so an `lsm/key_alloc` program that returns `-EPERM` could
 **deny** the staging outright, not just observe it. That is the enforcement path,
 and it is written up in `keyring_snoop.lsm.bpf.c`.
 
 It is **compile-only** here, for the same reason ch20 documents: BPF-LSM must be
 enabled at boot (`bpf` listed in the kernel `lsm=` parameter). The lab's
-kernel-6.12/linuxkit VM does not enable it — `/sys/kernel/security/lsm` is absent
+linuxkit VM (kernel `7.0.12-linuxkit`) does not enable it — `/sys/kernel/security/lsm` is absent
 — so the hook exists but nothing can attach to it. `make lsm` proves the program
 compiles against real BTF; running it needs a BPF-LSM host. This mirrors ch25's
 gate fragment: shown, not claimed to run.
 
 The fentry hook is the pragmatic choice: it attaches on the lab kernel, and
 detection (not blocking) is what this chapter demonstrates. `key_create_or_update`
-is the public wrapper `add_key(2)` calls — confirmed in BTF to take
-`(keyring_ref, type, description, payload, plen, perm, flags)`, and a global
-symbol in kallsyms, so fentry can attach. (The `__`-prefixed inner
-`__key_create_or_update` has a different signature with no type string, and is not
-the right target.)
+is the public wrapper `add_key(2)` calls, taking
+`(keyring_ref, type, description, payload, plen, perm, flags)`. The fentry attach
+in `logs/demo.txt` succeeding is the proof it is BTF-visible with that signature.
+(The `__`-prefixed inner `__key_create_or_update` has a different signature with
+no type string, and is not the right target.)
 
 ### Reading the arg strings — a measured detail
 
@@ -104,7 +104,8 @@ probe, finding Q0), so triggering `stage-key` in a container needs
 `/sys/kernel/btf`.
 
 `logs/demo.txt` is a captured run: the 8192-byte staging is flagged, the 32-byte
-key is not, both hooks agree on type and size.
+key is not. With tracefs mounted (see above) both hooks fire and agree on type
+and size; on the default lab kernel only the fentry line appears.
 
 ## Scope
 
@@ -119,6 +120,5 @@ key is not, both hooks agree on type and size.
 - **Enforcement is an extension.** `keyring_snoop.lsm.bpf.c` sketches the
   `lsm/key_alloc` denial (return `-EPERM` on non-root `user`-key staging), left
   inert; it needs a BPF-LSM host to attach.
-- Verified on the lab's kernel-6.12/linuxkit aarch64 container (kernel string
-  `7.0.12-linuxkit`). The LSM path is unavailable there and is documented as
-  such, not run.
+- Verified on the lab's linuxkit aarch64 container (kernel `7.0.12-linuxkit`).
+  The LSM path is unavailable there and is documented as such, not run.

@@ -36,9 +36,12 @@ int main(int argc, char **argv)
     printf("staged %zu bytes in user key serial=%ld\n", n, k);
 
     char *out = malloc(n ? n : 1);
+    if (!out) { perror("malloc"); free(b); return 1; }
     long got = syscall(SYS_keyctl, KEYCTL_READ, k, out, n, 0);
     printf("read back %ld bytes\n", got);
 
     syscall(SYS_keyctl, KEYCTL_REVOKE, k, 0, 0, 0);
+    free(out);
+    free(b);
     return 0;
 }

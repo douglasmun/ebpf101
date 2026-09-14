@@ -13,6 +13,13 @@
 #   Q3  do add_key/keyctl work unprivileged on this arch?
 #   Q4  does the payload survive the dropper's exit in the session keyring?
 #   Q5  what does /proc/keys show, before and after KEYCTL_REVOKE?
+#
+# CONTRACT: this probe must run ALL of Q0-Q5 even when individual stages fail --
+# a failing measurement is itself a result. Do NOT add `set -e` or
+# `set -o pipefail`: they would abort mid-probe and truncate the transcript,
+# which would then be presented as a complete run. Each stage reports its own
+# success/failure inline instead.
+set +e +o pipefail
 cd /work
 
 echo "=== environment ==="
@@ -27,7 +34,7 @@ echo "=== Q1: is the big_key type present? (CONFIG_BIG_KEYS) ==="
 if [ -r /proc/config.gz ]; then
     zcat /proc/config.gz | grep -E '^CONFIG_BIG_KEYS' || echo "CONFIG_BIG_KEYS not set"
 else
-    echo "/proc/config.gz unreadable on this kernel - probing by add_key instead"
+    echo "/proc/config.gz unreadable - big_key availability is measured in Q2 below"
 fi
 echo
 
@@ -49,6 +56,8 @@ static long add_key_(const char *type, const char *desc,
                      const void *p, size_t plen, int ring) {
     return syscall(SYS_add_key, type, desc, p, plen, ring);
 }
+/* Every call site passes exactly four trailing args (padded with 0L/NULL), so
+ * reading four va_args here is always fed correctly. */
 static long keyctl_(int op, ...) {
     va_list a; va_start(a, op);
     long b = va_arg(a, long), c = va_arg(a, long);
@@ -87,7 +96,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     printf("  KEYCTL_READ(copy)  returned %ld bytes, content %s\n",
-           got, (got == (long)sz && out[0] == 'A' && out[got-1] == 'A')
+           got, (got == (long)sz && (got == 0 || (out[0] == 'A' && out[got-1] == 'A')))
                 ? "INTACT" : "MISMATCH");
 
     if (argc > 3 && !strcmp(argv[3], "keep")) {
@@ -102,17 +111,38 @@ int main(int argc, char **argv) {
 }
 C
 sed -i '1a #include <stdarg.h>' kr_probe.c
-gcc -O2 -Wall -o kr_probe kr_probe.c || { echo "PROBE BUILD FAILED"; exit 1; }
+gcc -O2 -Wall -o kr_probe kr_probe.c
+kr_probe_ok=0; [ -x kr_probe ] && kr_probe_ok=1
+[ "$kr_probe_ok" = 1 ] || echo "  PROBE BUILD FAILED - Q0/Q3/Q4 that need kr_probe are SKIPPED"
+
 
 echo "=== Q0/Q3: does add_key/keyctl work, as root and as a normal uid? ==="
 echo "  NOTE: Docker's DEFAULT seccomp profile blocks add_key (EPERM even as uid 0)."
 echo "        run-tests.sh passes --security-opt seccomp=unconfined for this probe."
 echo "  -- as uid $(id -u)"
-./kr_probe user 4096 2>&1 | sed 's/^/    /'
-if [ "$(id -u)" = 0 ] && id nobody >/dev/null 2>&1; then
-    echo "  -- as uid $(id -u nobody) (nobody): does the technique need privilege?"
+if [ "$kr_probe_ok" = 1 ]; then
+    ./kr_probe user 4096 2>&1 | sed 's/^/    /'
+else
+    echo "    SKIPPED (kr_probe did not build)"
+fi
+
+# Q3: does the technique need privilege? Run as an unprivileged uid.
+# Requires: we are root, setpriv exists, and a nobody user resolves.
+if [ "$kr_probe_ok" != 1 ]; then
+    :   # already reported above
+elif [ "$(id -u)" != 0 ]; then
+    echo "  -- Q3 SKIPPED: not running as root, cannot drop to another uid"
+elif ! command -v setpriv >/dev/null 2>&1; then
+    echo "  -- Q3 SKIPPED: setpriv (util-linux) not installed"
+elif ! id nobody >/dev/null 2>&1; then
+    echo "  -- Q3 SKIPPED: no 'nobody' user on this image"
+else
+    nobody_uid=$(id -u nobody)
+    nobody_gid=$(id -g nobody)   # nobody's real primary gid (not hardcoded 'nogroup')
+    echo "  -- as uid $nobody_uid (nobody): does the technique need privilege?"
     cp kr_probe /tmp/kr_probe_u && chmod 755 /tmp/kr_probe_u
-    setpriv --reuid=nobody --regid=nogroup --clear-groups /tmp/kr_probe_u user 4096 2>&1 | sed 's/^/    /'
+    setpriv --reuid="$nobody_uid" --regid="$nobody_gid" --clear-groups \
+        /tmp/kr_probe_u user 4096 2>&1 | sed 's/^/    /'
 fi
 echo
 
@@ -145,22 +175,43 @@ static int try_(const char *type, size_t n) {
 }
 int main(int argc, char **argv) {
     const char *type = argc > 1 ? argv[1] : "user";
-    size_t lo = 1, hi = 2u*1024*1024;
-    if (try_(type, lo) != 0) {
-        printf("  %s: even %zu byte fails: %s\n", type, lo, strerror(-try_(type, lo)));
+    int r = try_(type, 1);
+    if (r != 0) {
+        printf("  %s: even 1 byte fails: %s\n", type, strerror(-r));
         return 1;
     }
-    while (lo + 1 < hi) { size_t m = lo + (hi - lo)/2; if (try_(type, m) == 0) lo = m; else hi = m; }
+    /* Grow hi until it actually fails, so the ceiling is never silently capped
+     * (a big_key kernel can exceed any fixed bound). Cap the growth so a type
+     * with no ceiling cannot loop forever. */
+    size_t lo = 1, hi = 4096;
+    int hi_err = 0;
+    while ((hi_err = try_(type, hi)) == 0) {
+        lo = hi;
+        if (hi > (size_t)1 << 40) break;   /* 1 TiB sanity cap */
+        hi *= 2;
+    }
+    if (hi_err == 0) {
+        printf("  %s: max payload >= %zu bytes (no ceiling found below 1 TiB)\n",
+               type, lo);
+        return 0;
+    }
+    /* invariant: lo succeeds, hi fails, hi_err is hi's failure reason */
+    while (lo + 1 < hi) {
+        size_t m = lo + (hi - lo)/2;
+        int e = try_(type, m);
+        if (e == 0) lo = m; else { hi = m; hi_err = e; }
+    }
     printf("  %s: max payload = %zu bytes (at %zu: %s)\n",
-           type, lo, hi, strerror(-try_(type, hi)));
+           type, lo, hi, strerror(-hi_err));
     return 0;
 }
 C
 gcc -O2 -Wall -o kr_bisect kr_bisect.c || echo "  bisect build failed"
-./kr_bisect user
+user_ladder=$(./kr_bisect user); echo "$user_ladder"
 ./kr_bisect big_key
+# Reuse the ONE measurement shown above; do not re-run the bisection (M2).
+maxu=$(echo "$user_ladder" | sed -n 's/.*max payload = \([0-9]*\).*/\1/p')
 if [ "$hsz" != 0 ]; then
-    maxu=$(./kr_bisect user | sed -n 's/.*max payload = \([0-9]*\).*/\1/p')
     if [ -n "$maxu" ] && [ "$hsz" -gt "$maxu" ]; then
         echo "  VERDICT-Q2: static hello ($hsz B) EXCEEDS the user-key ceiling ($maxu B)."
         echo "              A keyring loader here needs big_key, a smaller/dynamic payload,"
@@ -174,8 +225,13 @@ echo
 echo "=== Q4: does the key survive the dropper's exit? (cross-process staging) ==="
 # Stage in a child that exits, then read from a separate process. Both are
 # children of this shell, so they share its session keyring.
-./kr_probe user 4096 keep | tee kr_stage.out
-serial=$(sed -n 's/.*serial=\([0-9]*\) left.*/\1/p' kr_stage.out)
+serial=""
+if [ "$kr_probe_ok" = 1 ]; then
+    ./kr_probe user 4096 keep | tee kr_stage.out
+    serial=$(sed -n 's/.*serial=\([0-9]*\) left.*/\1/p' kr_stage.out)
+else
+    echo "  SKIPPED (kr_probe did not build)"
+fi
 if [ -n "$serial" ]; then
     echo "  dropper exited; reading serial=$serial from a new process"
     cat > kr_read.c <<'C'

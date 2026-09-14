@@ -55,7 +55,8 @@ payload.
 
 `logs/demo.txt`: with `keyring_snoop` watching, `stage-key 8192` (a `user` key
 large enough to hold a payload) is flagged `<== STAGED PAYLOAD?`; `stage-key 32`
-(a tiny key) is not. Both hooks agree on type (`user`) and size. `stage-key`
+(a tiny key) is not. With tracefs mounted both hooks fire and agree on type
+(`user`) and size; on the default lab kernel only fentry does. `stage-key`
 itself emits no exec syscall, no memfd, no file descriptor — it is invisible to
 every ch25 rule and visible to this one.
 
@@ -70,7 +71,7 @@ side-by-side probe settled which read works where. Measured, not assumed — the
 recurring discipline of this repo.
 
 **Detection reaches; enforcement needs BPF-LSM.** `security_key_alloc` is an LSM
-hook and `bpf_lsm_key_alloc` is in this kernel's BTF, so an `lsm/key_alloc`
+hook with a `bpf_lsm_key_alloc` BTF stub on a BPF-LSM kernel, so an `lsm/key_alloc`
 program returning `-EPERM` could *block* the staging. That variant
 (`keyring_snoop.lsm.bpf.c`) is written and compiles against real BTF, but it is
 compile-only on the lab kernel for the same reason ch20 documents: BPF-LSM must be
@@ -85,5 +86,5 @@ staging that `stage-key` performs. The keyring **write** is the only
 syscall-visible moment in the whole chain; everything after it (the read-back, the
 `mmap`/`mprotect`, the jump) is indistinguishable from ordinary memory work, so a
 loader that obtains a key serial without calling `add_key` would evade even this.
-Verified on the lab's kernel-6.12/linuxkit aarch64 container; the LSM path is
+Verified on the lab's linuxkit aarch64 container (kernel `7.0.12-linuxkit`); the LSM path is
 unavailable there and documented as such rather than run.

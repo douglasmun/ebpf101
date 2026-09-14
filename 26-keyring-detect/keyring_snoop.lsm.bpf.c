@@ -10,7 +10,7 @@
  *
  * Why it is not the chapter's default:
  *   BPF-LSM must be enabled at boot (bpf listed in the kernel `lsm=` parameter),
- *   exactly the prerequisite ch20 documents. The lab's kernel-6.12/linuxkit VM
+ *   exactly the prerequisite ch20 documents. The lab's linuxkit VM (kernel 7.0.12-linuxkit)
  *   does NOT enable it — /sys/kernel/security/lsm is absent — so bpf_lsm_key_alloc
  *   is present in BTF (the hook exists) but nothing can attach to it here. This
  *   file therefore compiles against real BTF and is kept as a reference for a
