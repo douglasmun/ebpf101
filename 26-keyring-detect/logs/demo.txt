@@ -1,6 +1,6 @@
 ===============================================================
   26-keyring-detect — keyring_snoop demo
-  2026-09-14T15:31:29Z
+  2026-09-14T15:52:17Z
   kernel 7.0.12-linuxkit aarch64, debian:trixie-slim, --privileged
   tracefs mounted so the audit-parity tracepoint attaches too
 ===============================================================
@@ -11,7 +11,7 @@ $ ./stage-key 32               # tiny user key  -> not flagged
 
 watching key creation (add_key); flag >= 4096 bytes in user/big_key. Ctrl-C to stop.
 src    pid         uid        type/len      description         
-tracep pid=42536   uid=0      type=user     len=8192     _dntry              
-fentry pid=42536   uid=0      type=user     len=8192     _dntry                <== STAGED PAYLOAD?
-tracep pid=42537   uid=0      type=user     len=32       _dntry              
-fentry pid=42537   uid=0      type=user     len=32       _dntry              
+tracep pid=13967   uid=0      type=user     len=8192     _dntry              
+fentry pid=13967   uid=0      type=user     len=8192     _dntry                <== STAGED PAYLOAD?
+tracep pid=13968   uid=0      type=user     len=32       _dntry              
+fentry pid=13968   uid=0      type=user     len=32       _dntry              
