@@ -497,3 +497,24 @@ the measured input to that decision, not the decision.
 
 **Reproduce:** `./run-tests.sh keyring_probe.sh` (adds `seccomp=unconfined`; run under
 `--privileged` by hand to see the `/proc/keys` rows).
+
+### Re-run on Docker Desktop (14 Sep 2026)
+
+Both the probe and the chapter-26 detector it motivated were re-run on Docker
+Desktop (server 29.7.2, kernel `7.0.12-linuxkit aarch64`, `debian:trixie-slim`).
+
+**Probe** (`./run-tests.sh keyring_probe.sh`): the Q0–Q5 results above reproduced
+unchanged — `user`-key ceiling bisected to `32767` (32768 → `EINVAL`), `big_key`
+`ENODEV` at any size, `add_key`/`keyctl` succeeding as `nobody` (uid 65534), the
+key surviving the dropper's exit, and `/proc/keys` reading 0 bytes under default
+caps. Host quota this run: `maxbytes=700000`, `maxkeys=10000`,
+`root_maxbytes=25000000`.
+
+**Detector** (`26-keyring-detect/`, `--privileged --security-opt
+seccomp=unconfined -v /sys/kernel/btf:/sys/kernel/btf:ro`): `make` built the
+detector (vmlinux.h → BPF object → skeleton → loader) and `make lsm` the
+compile-only enforcement object. With tracefs mounted, both hooks attached and
+**agreed** — a staged 8192-byte `user` key was flagged `<== STAGED PAYLOAD?` on
+both `tracep` and `fentry` lines; a 32-byte key was reported by both and flagged
+by neither. Transcript: `26-keyring-detect/logs/demo.txt`. The LSM path is
+compile-only on this kernel (no BPF-LSM) and was built, not attached.
