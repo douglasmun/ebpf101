@@ -11,6 +11,7 @@ and container kernel the run was made on.
 |---|---|---|
 | `10-v1.2-*` | `src/` + `detection-patched/` | the code as published in v1.2 — all 13 tests |
 | `20-v1.1-*` | `src-v1.1-verbatim/` + `detection/` | the same tests against what v1.1 printed |
+| `30-*` | `src/` | keyring-staged fileless exec — feasibility probe (`keyring_probe.sh`) |
 
 The `20-` set is deliberately partial: only the three tests where the fixes are visible.
 

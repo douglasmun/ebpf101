@@ -34,6 +34,11 @@ case "$t" in
   noexec_test.sh|mfd.sh|exit_test.sh|verity.sh) FLAGS=(--privileged) ;;
   strace_check.sh)                              FLAGS=(--cap-add=SYS_PTRACE) ;;
   detection_lint.sh)                            FLAGS=(--privileged) ;;
+  # Docker's DEFAULT seccomp profile blocks add_key/keyctl outright (EPERM even
+  # as uid 0) - measured, see Q0 in the probe. seccomp=unconfined is the minimum
+  # that lets the syscalls through; the probe still runs as an ordinary uid
+  # internally to answer whether the technique needs privilege (Q3).
+  keyring_probe.sh)                             FLAGS=(--security-opt seccomp=unconfined) ;;
   gate_compile.sh)                              FLAGS=(--privileged -v /sys/kernel/btf:/sys/kernel/btf:ro) ;;
   *)                                            FLAGS=() ;;
 esac
