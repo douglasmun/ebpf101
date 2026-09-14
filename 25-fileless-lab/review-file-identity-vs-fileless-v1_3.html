@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review notes — Giving a File Its Own Identity (v1.3)</title>
+<style>
+  :root{
+    --paper:#f6f7f5;
+    --sheet:#ffffff;
+    --ink:#1a222b;
+    --ink-soft:#4d5762;
+    --ink-faint:#7c858e;
+    --rule:#cdd4d7;
+    --block:#92211b;
+    --verify:#7a5312;
+    --design:#2b5a6b;
+    --edit:#5a6068;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:ui-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:17px;
+    line-height:1.62;
+  }
+  .sheet{
+    max-width:44rem;
+    margin:0 auto;
+    background:var(--sheet);
+    padding:2.6rem 2rem 3.4rem;
+    border-left:1px solid var(--rule);
+    border-right:1px solid var(--rule);
+    min-height:100vh;
+  }
+  h1{
+    font-size:1.72rem;
+    line-height:1.22;
+    font-weight:600;
+    letter-spacing:-.012em;
+    margin:0 0 .5rem;
+    max-width:30ch;
+  }
+  .subject{
+    margin:0 0 1.6rem;
+    color:var(--ink-soft);
+    font-size:1.02rem;
+  }
+  .subject a{color:var(--design);text-decoration-thickness:1px;text-underline-offset:2px;word-break:break-all}
+
+  dl.meta{
+    margin:0 0 1.8rem;
+    padding:.9rem 0;
+    border-top:2px solid var(--ink);
+    border-bottom:1px solid var(--rule);
+    display:grid;
+    grid-template-columns:8.5rem 1fr;
+    gap:.28rem 1rem;
+    font-size:.92rem;
+  }
+  dl.meta dt{color:var(--ink-faint)}
+  dl.meta dd{margin:0}
+
+  .verdict{font-size:1.06rem;margin:0 0 1.4rem}
+  .verdict strong{font-weight:600}
+
+  .tally{
+    display:flex;flex-wrap:wrap;gap:.5rem;
+    margin:0 0 2.4rem;padding:0;list-style:none;
+    font-size:.86rem;
+  }
+  .tally li{
+    border:1px solid var(--rule);
+    border-left-width:4px;
+    padding:.38rem .7rem;
+    color:var(--ink-soft);
+  }
+  .tally li b{color:var(--ink);font-weight:600}
+  .t-block{border-left-color:var(--block)}
+  .t-verify{border-left-color:var(--verify)}
+  .t-design{border-left-color:var(--design)}
+  .t-edit{border-left-color:var(--edit)}
+
+  section.group{margin:0 0 2.6rem}
+  h2{
+    font-size:1.16rem;font-weight:600;letter-spacing:-.008em;
+    margin:0 0 .25rem;padding-bottom:.4rem;
+    border-bottom:1px solid var(--rule);
+  }
+  .gnote{margin:.5rem 0 1.3rem;color:var(--ink-soft);font-size:.95rem}
+
+  article.finding{
+    padding-left:1.05rem;
+    border-left:3px solid var(--rule);
+    margin:0 0 1.5rem;
+  }
+  .g-block article.finding{border-left-color:var(--block)}
+  .g-verify article.finding{border-left-color:var(--verify)}
+  .g-design article.finding{border-left-color:var(--design)}
+
+  h3{
+    font-size:1rem;font-weight:600;margin:0 0 .35rem;line-height:1.4;
+  }
+  h3 .id{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:.82rem;color:var(--ink-faint);
+    margin-right:.5rem;font-weight:400;
+  }
+  article.finding p{margin:0 0 .6rem;font-size:.98rem}
+  article.finding p:last-child{margin-bottom:0}
+  .ref{
+    display:block;font-size:.82rem;color:var(--ink-faint);
+    margin-top:.45rem;
+  }
+  code{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:.85em;
+    background:#eef0ef;
+    padding:.08em .3em;
+    border-radius:2px;
+    word-break:break-word;
+  }
+  ul.plain{margin:.4rem 0 0;padding-left:1.1rem}
+  ul.plain li{margin-bottom:.55rem;font-size:.97rem}
+  ul.plain li:last-child{margin-bottom:0}
+
+  footer{
+    margin-top:3rem;padding-top:1rem;
+    border-top:1px solid var(--rule);
+    font-size:.86rem;color:var(--ink-faint);
+  }
+  footer p{margin:0 0 .5rem}
+
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--design);outline-offset:2px}
+
+  @media (max-width:640px){
+    body{font-size:16px}
+    .sheet{padding:1.9rem 1.15rem 2.6rem;border:0}
+    h1{font-size:1.44rem}
+    dl.meta{grid-template-columns:1fr;gap:.05rem}
+    dl.meta dd{margin-bottom:.55rem}
+  }
+  @media print{
+    body{background:#fff;font-size:11pt}
+    .sheet{border:0;padding:0;max-width:none}
+    article.finding{break-inside:avoid}
+    a{color:inherit;text-decoration:none}
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#14181c;--sheet:#191e23;--ink:#e6e9ea;--ink-soft:#a9b2b8;
+      --ink-faint:#828c93;--rule:#333c43;--block:#d9776c;--verify:#c79a4a;
+      --design:#78b3c6;--edit:#8d979e;
+    }
+    code{background:#232a30}
+  }
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <h1>Review notes: Giving a File Its Own Identity</h1>
+  <p class="subject">Advanced Linux Threat Detection — File Identity vs Fileless Execution, v1.3.
+    <a href="https://douglasmun.github.io/ebpf101/25-fileless-lab/Adv_Linux_Threat_Detection_-_File_Identity_vs_Fileless_Execution_v1.3.html">Source document</a></p>
+
+  <dl class="meta">
+    <dt>Author</dt><dd>Douglas Mun</dd>
+    <dt>Published</dt><dd>07 Sep 2026, TLP:CLEAR</dd>
+    <dt>Reviewed</dt><dd>07 Sep 2026</dd>
+    <dt>Scope</dt><dd>Enforcement design (§5.6, §6.2, Appendix C) and internal consistency. The threat analysis in §2–§4 is not disputed.</dd>
+  </dl>
+
+  <p class="verdict">Strong document. The coverage table in §5.3 and the refusal to overclaim on F-4 and F-8
+    are what make it credible, and publishing the lab defects in Appendix G is unusual and welcome. The
+    criticism below is almost entirely about the enforcement design rather than the analysis: <strong>the prose
+    describes a gate that Appendix C does not implement</strong>, and the exemption that containers require looks
+    reachable by an unprivileged attacker.</p>
+
+  <ul class="tally">
+    <li class="t-block"><b>5</b> blocking for enforcement</li>
+    <li class="t-verify"><b>1</b> verify before building</li>
+    <li class="t-design"><b>4</b> design &amp; operational</li>
+    <li class="t-edit"><b>6</b> editorial</li>
+  </ul>
+
+  <section class="group g-block">
+    <h2>Blocking for enforcement</h2>
+    <p class="gnote">Each of these would either break production or leave the gate bypassable if M-03 were
+      switched from detect to enforce as written.</p>
+
+    <article class="finding">
+      <h3><span class="id">R-1</span>The overlay exemption is reachable by an unprivileged attacker</h3>
+      <p>F-7 requires the gate to tolerate overlay inodes, or it fail-closes every container; M-09 frames that
+        as a scoping decision. But unprivileged user namespaces have permitted unprivileged overlayfs mounts
+        since 5.11. A T-A adversary can <code>unshare -Ur</code>, mount an overlay, and execute from it, landing
+        squarely in the <code>ENODATA</code> case the host gate has to exempt. The exemption containers need is
+        the attacker's escape hatch.</p>
+      <p>Either deny overlay-backed exec outside an allow-listed runtime lineage, or make
+        <code>user.max_user_namespaces=0</code> a stated hard precondition for M-03. This deserves its own
+        finding rather than a line in M-09.</p>
+      <span class="ref">F-7, M-09</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-2</span><code>verify_file()</code> fail-closes every container on the host</h3>
+      <p>The function returns <code>-EPERM</code> on <code>ENODATA</code>. Loaded on any container host, that
+        blocks every container exec — precisely the outcome F-7 warns about. BPF LSM programs are system-wide,
+        not per-namespace, so the overlay exemption is a code requirement, not a deployment choice an operator
+        makes later.</p>
+      <span class="ref">Appendix C, F-7</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-3</span><code>exec_gate</code> carries no runtime allow-list</h3>
+      <p>DET-01 says to allow-list runc and containerd by verified parent digest. The illustrative gate does
+        not: it denies all tmpfs inodes with <code>i_nlink == 0</code> unconditionally. On runc ≤1.1.x, or on
+        any rootless or fallback path on newer runc, that is every container start.</p>
+      <span class="ref">Appendix C, DET-01, F-5</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-4</span>Denied verdicts are never cached, so the deny path is a DoS surface</h3>
+      <p>Only <code>approved</code> verdicts enter <code>bpf_inode_storage</code>. An unprivileged loop of
+        <code>execve</code> against unsigned binaries therefore forces an unbounded PKCS#7 verification per
+        attempt, in kernel context. The §7 micro-benchmark measures the cold and warm <em>allow</em> paths; under
+        enforcement the adversarial deny path is the one that decides whether the control is safe to enable.</p>
+      <span class="ref">F-10, §7, Appendix C</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-5</span>The anon-exec predicate changes meaning with the <code>/tmp</code> backing</h3>
+      <p><code>is_anon_exec_inode()</code> denies by inode class on a tmpfs <code>/tmp</code>, but falls through
+        to signature verification on an overlay or ext4 <code>/tmp</code>. G-4 records the coverage gap in one
+        direction; the converse is not stated — the same pattern 1f produces two different policy outcomes
+        depending on how a host mounts <code>/tmp</code>, which makes the control's behaviour un-auditable across
+        a mixed fleet.</p>
+      <span class="ref">Appendix C, G-4, F-9</span>
+    </article>
+  </section>
+
+  <section class="group g-verify">
+    <h2>Verify before building</h2>
+    <p class="gnote">One cheap check that determines whether the load-bearing half of M-03 can exist at all.</p>
+
+    <article class="finding">
+      <h3><span class="id">R-6</span>Is <code>mmap_file</code> in the sleepable LSM hook set?</h3>
+      <p>Both <code>bpf_get_file_xattr</code> and <code>bpf_verify_pkcs7_signature</code> are
+        <code>KF_SLEEPABLE</code>, so each leg of the gate must attach as <code>lsm.s/</code>.
+        <code>bprm_check_security</code> is in the sleepable set. I am not confident <code>mmap_file</code> is,
+        and the upstream selftests demonstrate signature verification on other hooks.</p>
+      <p>If it is not sleepable, the <code>mmap_file(PROT_EXEC)</code> leg will not load — and §1 stakes the
+        entire deployment constraint (libc, <code>ld.so</code>, NSS modules, native extensions, vendor plugins)
+        on that leg. Pin it against <code>sleepable_lsm_hooks</code> in <code>kernel/bpf/bpf_lsm.c</code> on the
+        target kernel before any pilot work.</p>
+      <span class="ref">§1, Appendix C</span>
+    </article>
+  </section>
+
+  <section class="group g-design">
+    <h2>Design and operational</h2>
+
+    <article class="finding">
+      <h3><span class="id">R-7</span>The <code>i_version</code> fallback puts the signing key on fleet hosts</h3>
+      <p>Signing <code>i_ino:i_generation:i_version</code> produces a per-host value that cannot be generated at
+        build time. That forces on-host signing, which collapses the offline-CA story the whole Appendix C
+        pipeline rests on and hands a T-B adversary the key. Either drop the fallback or state plainly that it is
+        detect-only.</p>
+      <span class="ref">§5.4</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-8</span>No comparison against the incumbent controls</h3>
+      <p>IPE, the Integrity Policy Enforcement LSM (merged around 6.12, worth confirming), already does
+        fs-verity and dm-verity digest-based execution policy natively, with signed policy updates and a policy
+        language. It is the closest existing thing to what is being hand-rolled here, and it is not mentioned.
+        IMA appraisal and dm-verity are named but deferred to further work.</p>
+      <p>Since M-03's preconditions — immutable host, controlled supply chain, kernel ≥6.8, Secure Boot plus
+        lockdown — largely describe hosts that could simply ship a verified image, the comparison against IPE,
+        IMA-appraise and bootc/composefs is the decision an adopter actually faces. It belongs in the body, not
+        the backlog.</p>
+      <span class="ref">§1, §6.2, §7</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-9</span>fs-verity enablement and the package-update window are understated</h3>
+      <p>Two costs are compressed into a single line of M-03. First, <code>tune2fs -O verity</code> is not
+        settable on a mounted ext4, so existing fleets need offline filesystem work or reprovisioning — not a
+        build-pipeline change. Second, there is no fs-verity or xattr hook in dpkg or rpm, so every package
+        update leaves a window in which a replaced binary is executable and tagless. Under a fail-closed gate
+        that is a self-inflicted outage, and the detect-only period will not surface it.</p>
+      <span class="ref">M-03, Appendix C signing pipeline</span>
+    </article>
+
+    <article class="finding">
+      <h3><span class="id">R-10</span>Mode-2 <code>memfd_noexec</code> semantics on mixed 6.3–6.5 kernels</h3>
+      <p>M-01 describes the later behaviour only — <code>MFD_EXEC</code> rejected with <code>EACCES</code>,
+        <code>MFD_NOEXEC_SEAL</code> implied. My recollection is that mode 2 originally returned
+        <code>EACCES</code> to flagless <code>memfd_create</code> callers and was changed during the 6.3–6.6
+        range because it broke userspace. If so, a fleet spanning those kernels will see two different
+        behaviours from the same sysctl value. Worth pinning the commit before the M-01 rollout.</p>
+      <span class="ref">F-5, M-01, Appendix A</span>
+    </article>
+  </section>
+
+  <section class="group">
+    <h2>Editorial</h2>
+    <ul class="plain">
+      <li>Appendix G's listing column is off by one on most rows. The <code>execveat</code> loader is in B.2, not
+        B.3; pattern 1b is B.3, not B.4; pattern 1d is B.4, not B.6; pattern 4 is B.6, not B.7 (B.7 is the
+        Makefile). The G-1 and G-2 dispositions carry the same shift.</li>
+      <li>§4 says the full source list is in §9. References are §8; §9 is the glossary.</li>
+      <li>§4 still reads “This revision (v1.1, 06 Sep 2026)” in a document published as v1.3.</li>
+      <li>The lab kit is still named <code>fileless-lab_TLP-GREEN.tar.gz</code> under a TLP:CLEAR header, and
+        the header explicitly supersedes the earlier GREEN marking.</li>
+      <li>Figures 1 and 4 came through with no image source. Figures 2 and 3 are inline SVG and render fine, so
+        this is worth a check in a clean browser session.</li>
+      <li>Reference 1's Elastic URL contains <code>/threat-command/</code>, which does not look like an Elastic
+        Security Labs path. Confirm it resolves.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Caveats: R-6 and R-8 are flagged for verification rather than asserted — the sleepable-hook set and the
+      IPE merge window should both be checked against the target kernel's source rather than taken from this
+      note. R-10 rests on recollection of a userspace-breakage fix and needs the commit.</p>
+    <p>Everything else above is checkable directly against the published document and the listings in its
+      appendices.</p>
+  </footer>
+
+</main>
+</body>
+</html>
