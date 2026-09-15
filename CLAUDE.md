@@ -54,21 +54,18 @@ progression table and the numbered index), and the root `README.md` table.
 
 ## Upstream Python-BPF (chapter 24)
 
-Chapter 24 depends on the released `pythonbpf==0.1.9`, which has a compiler bug:
-a map lookup used in arithmetic (`(prev or 0) + 1`) never dereferences the
-pointer. The chapter works around it with an explicit `deref()`.
+The upstream compiler bug, the `deref()` workaround, issue #89, PR #100 and the
+fork branch are all written up in
+[`docs/24-pythonbpf.md`](docs/24-pythonbpf.md) — read it before touching ch24.
 
-- Bug: [issue #89](https://github.com/pythonbpf/Python-BPF/issues/89)
-- Fix: [PR #100](https://github.com/pythonbpf/Python-BPF/pull/100), on the fork
-  `douglasmun/Python-BPF`, branch `fix/bool-op-map-lookup-deref`
+Two things that are decisions, not documentation:
 
-**The chapter deliberately does not depend on the fork.** Installing a personal
-fork of a pre-1.0 compiler is a worse reader default than a released version plus
-one explicit `deref()`. Do not change this without asking.
-
-Note when testing against Python-BPF: its IR and llc test tiers only assert that
-compilation *succeeds*, so a wrong-value miscompile passes both. Assert on the
-emitted IR.
+- **The chapter deliberately depends on released `pythonbpf==0.1.9`, not the
+  fork.** A personal fork of a pre-1.0 compiler is a worse reader default than a
+  released version plus one explicit `deref()`. Do not change this without asking.
+- **Assert on emitted IR when testing against Python-BPF.** Its IR and llc test
+  tiers only assert that compilation *succeeds*, so a wrong-value miscompile
+  passes both.
 
 ## Environment
 
