@@ -25,6 +25,7 @@ vmlinux.h
 23-ids/ids
 26-keyring-detect/keyring_snoop
 26-keyring-detect/stage-key
+27-nettop/nettop
 
 # --- Ch25 fileless lab: built inside the container, never on the host ---
 # Both source trees (src/ and src-v1.1-verbatim/) build the same 7 targets.
@@ -59,3 +60,9 @@ __pycache__/
 *v1.1.pdf
 *v1.2.html
 *v1.2.pdf
+
+# --- Third-party reference papers ---
+# Source material read while writing a chapter, kept locally for convenience.
+# Not ours to redistribute, and this repo is public with Pages enabled, so the
+# PDFs stay out of the tree; the chapters cite them by title and author instead.
+26-keyring-detect/*.pdf

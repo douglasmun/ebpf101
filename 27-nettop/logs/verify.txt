@@ -1,0 +1,30 @@
+===============================================================
+  27-nettop — verify-nettop.sh
+  2026-09-15T05:04:36Z
+  kernel 7.0.12-linuxkit aarch64, debian:trixie-slim, --privileged
+===============================================================
+
+$ sudo bash verify-nettop.sh
+
+Chapter 27 — per-process accounting check
+Transfer size: 10485760 bytes over lo:19327
+
+--- nettop output (transfer window) ---
+82325    nc                       0B       5.7M          0
+82333    nc                     5.7M         0B          0
+82333    nc                     4.3M         0B          0
+82325    nc                       0B       4.3M          0
+
+  PASS  nc appears in the per-process table
+--- socket layer vs wire ---
+  payload written by the test :     10485760 bytes
+  tc egress counter (wire)    :     10533164 bytes
+  wire overhead               :        47404 bytes (+0.5%)
+
+  That overhead is TCP/IP headers (and any retransmits). nettop's
+  byte columns deliberately exclude it — they report what the
+  process asked the socket layer to move, which is the question
+  'which process is using my bandwidth' actually wants answered.
+  PASS  wire bytes exceed socket-layer bytes, as documented
+
+=== 2 passed, 0 failed ===
