@@ -27,6 +27,16 @@
 #include <bpf/bpf_core_read.h>
 #include "execshield.h"
 
+/*
+ * vmlinux.h is generated from BTF and carries no userspace headers, so the
+ * errno macros are absent, and a BPF program cannot pull in <linux/errno.h>
+ * either. Define the one value we return by hand — the standard libbpf idiom.
+ * ch20 never needed it because it only ever returned 0 (allow).
+ */
+#ifndef EPERM
+#define EPERM 1
+#endif
+
 char LICENSE[] SEC("license") = "GPL";
 
 /*

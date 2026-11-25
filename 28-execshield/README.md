@@ -85,7 +85,11 @@ were wrong.
 - **BPF-LSM must be active** (`bpf` in the kernel `lsm=` parameter) — the same
   Chapter 20 wall. The loader checks `/sys/kernel/security/lsm` and points at
   `20-lsm/enable-bpf-lsm.sh` if it is missing. On a host without BPF-LSM the
-  program compiles but cannot attach.
+  program compiles but cannot attach. Both halves were compile-verified in a
+  privileged `debian:trixie-slim` container (kernel `7.0.14-linuxkit`, clang 19);
+  the BPF object carries the `lsm/bprm_check_security` program and the
+  `protected_cgroups` map. That kernel has no `bpf` in `lsm=`, so the attach is
+  still pending a BPF-LSM host — the same state as ch26's LSM path.
 - **Enforcement, scoped, not a full policy.** This denies all exec in the named
   cgroups. Turning it into a service policy means handling startup (above) and
   pairing it with the egress / file / privilege hooks from the ch28 sketch to

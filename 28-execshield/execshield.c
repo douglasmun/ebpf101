@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <bpf/libbpf.h>
+#include <bpf/bpf.h>      /* bpf_map_update_elem + BPF_ANY (ch21's loader uses it too) */
 #include "execshield.skel.h"
 #include "execshield.h"
 

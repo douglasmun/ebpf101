@@ -106,6 +106,10 @@ exec syscall at all. A real exec shield pairs this hook with those paths.
 - **Needs BPF-LSM.** `bpf` must be in the kernel `lsm=` parameter, the same ch20
   wall; the loader checks `/sys/kernel/security/lsm` and points at
   `20-lsm/enable-bpf-lsm.sh` otherwise.
-- **Not yet built or run.** Authored on a macOS host with no BPF-LSM kernel. The
-  chapter's status cell stays unverified until it is built and `verify-execshield.sh`
-  run on a BPF-LSM host.
+- **Compiles in Docker; attach pending.** Both halves build clean in a
+  privileged `debian:trixie-slim` container (kernel `7.0.14-linuxkit`, clang 19):
+  the BPF object carries the `lsm/bprm_check_security` program and the
+  `protected_cgroups` map, and the loader links against libbpf. But that linuxkit
+  kernel has no `bpf` in `lsm=`, so the shield cannot attach there — the same wall
+  ch26's enforcement path hit. `verify-execshield.sh` needs a BPF-LSM host before
+  the status cell flips to run.
