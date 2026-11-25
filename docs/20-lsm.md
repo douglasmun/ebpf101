@@ -51,15 +51,23 @@ Then re-run this program.
 ```
 
 A helper script does step 1 safely — it reads your *current* LSM list (so it
-preserves every active module), appends `bpf`, backs up `/etc/default/grub`, runs
-`update-grub`, and is idempotent:
+preserves every active module), appends `bpf`, runs `update-grub`, and is
+idempotent:
 
 ```
 sudo bash 20-lsm/enable-bpf-lsm.sh   # then: sudo reboot
 ```
 
-It writes the parameter to `GRUB_CMDLINE_LINUX_DEFAULT`, so booting **recovery
-mode** still comes up without `bpf` — a clean fallback if anything misbehaves.
+It writes the parameter as a GRUB **drop-in** (`/etc/default/grub.d/99-bpf-lsm.cfg`)
+that *appends* to `GRUB_CMDLINE_LINUX_DEFAULT`, rather than editing
+`/etc/default/grub` in place. That matters on cloud images: the drop-ins in
+`/etc/default/grub.d/` are sourced *after* the main file, and one of them
+(`50-cloudimg-settings.cfg`) **overwrites** `GRUB_CMDLINE_LINUX_DEFAULT` instead
+of appending — so an `lsm=` written into the main file is silently clobbered and
+the kernel boots without `bpf`, with no error to explain why. A `99-`ordered
+drop-in runs last and survives. Because it only touches the `_DEFAULT` cmdline,
+booting **recovery mode** still comes up without `bpf` — a clean fallback — and
+reverting is one `rm` of the drop-in plus `update-grub`.
 
 After running it and rebooting, the list confirms it:
 
