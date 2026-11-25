@@ -1,0 +1,27 @@
+Active LSMs: lockdown,capability,landlock,yama,apparmor,bpf,ima,evm   (bpf present — good)
+Test cgroup /sys/fs/cgroup/uidshield-test holds pid 3231.
+Nested test: protecting /sys/fs/cgroup/uidshield-parent, will escalate in child /sys/fs/cgroup/uidshield-parent/worker.
+Loading uidshield scoped to the test cgroup(s) ...
+
+protecting /sys/fs/cgroup/uidshield-test (cgroup id 9121)
+protecting /sys/fs/cgroup/uidshield-parent (cgroup id 9183)
+
+Shield active: escalation to root (uid 0) is DENIED inside the protected cgroup(s). Ctrl-C to stop.
+PID      VERDICT COMM             EUID
+--- Inside the protected cgroup: escalation to root should be DENIED ---
+3239     DENY    try-escalate     65534 -> 0
+OK: escalation denied inside protected cgroup — EPERM AND shield logged DENY for pid 3239.
+
+--- Inside a CHILD of a protected cgroup: escalation should ALSO be DENIED ---
+3246     DENY    try-escalate     65534 -> 0
+OK: escalation denied in a CHILD of the protected cgroup — the ancestry walk covers descendants.
+
+--- Outside the cgroup: the SAME escalation must SUCCEED (host stays usable) ---
+OK: the same escalation succeeded outside the protected cgroup (exit 0).
+
+Detaching (cleanup confirms the enforcing program is gone before exit) ...
+
+Detached — privilege changes allowed again. Bye!
+
+=== verify exit: 0 (PASS) ===
+# ran 2026-11-25 in Lima VM shirudo-dev: kernel 7.0.0-44-generic aarch64; LSM=lockdown,capability,landlock,yama,apparmor,bpf,ima,evm

@@ -1,0 +1,32 @@
+Active LSMs: lockdown,capability,landlock,yama,apparmor,bpf,ima,evm   (bpf present — good)
+Test cgroup /sys/fs/cgroup/fileshield-test holds pid 3316.
+Guarded stand-in secret: /tmp/fileshield-verify.mPYNb9/secret  (NOT /etc/shadow — the match is by (dev,ino), identical on any file).
+Nested test: protecting /sys/fs/cgroup/fileshield-parent, will open the secret in child /sys/fs/cgroup/fileshield-parent/worker.
+Loading fileshield scoped to the test cgroup(s), guarding only /tmp/fileshield-verify.mPYNb9/secret ...
+
+protecting cgroup /sys/fs/cgroup/fileshield-test (id 9269)
+protecting cgroup /sys/fs/cgroup/fileshield-parent (id 9331)
+guarding file /tmp/fileshield-verify.mPYNb9/secret (dev 265289729, ino 1865030)
+
+Shield active: opening a guarded file is DENIED inside the protected cgroup(s). Ctrl-C to stop.
+PID      VERDICT COMM             FILE
+--- Inside the protected cgroup: opening the guarded secret should be DENIED ---
+3324     DENY    cat              dev=265289729 ino=1865030
+OK: open denied inside protected cgroup — open failed AND shield logged DENY for pid 3324.
+
+--- Inside the protected cgroup: an UNGUARDED file must still open (per-file, not blanket) ---
+OK: the unguarded decoy opened normally inside the protected cgroup.
+
+--- Inside a CHILD of a protected cgroup: guarded open should ALSO be DENIED ---
+3336     DENY    cat              dev=265289729 ino=1865030
+OK: guarded open denied in a CHILD of the protected cgroup — the ancestry walk covers descendants.
+
+--- Outside the cgroup: the SAME guarded file must OPEN (host stays usable) ---
+OK: the guarded secret opened normally outside the protected cgroup.
+
+Detaching (cleanup confirms the enforcing program is gone before exit) ...
+
+Detached — guarded files open normally again. Bye!
+
+=== verify exit: 0 (PASS) ===
+# ran 2026-11-25 in Lima VM shirudo-dev: kernel 7.0.0-44-generic aarch64; LSM=lockdown,capability,landlock,yama,apparmor,bpf,ima,evm
