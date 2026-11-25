@@ -103,6 +103,13 @@ exec syscall at all. A real exec shield pairs this hook with those paths.
   service's allowed behaviour, or who exploits the kernel below the LSM layer, is
   not stopped. This contains the exploitation technique; it does not prevent the
   bug.
+- **Scope is per-cgroup-id, not hierarchical.** `bpf_get_current_cgroup_id()`
+  returns the task's *own* cgroup, so a child or delegated sub-cgroup of a
+  protected one has a different id and is **not** covered — a worker the nginx
+  master spawns in `.../nginx.service/<child>` would exec freely. The shipped
+  primitive covers exactly the leaf cgroups you enumerate; protecting a service
+  with sub-cgroups means listing each one, or walking cgroup ancestry in the BPF
+  program. Tracked as [issue #6](https://github.com/douglasmun/ebpf101/issues/6).
 - **Needs BPF-LSM.** `bpf` must be in the kernel `lsm=` parameter, the same ch20
   wall; the loader checks `/sys/kernel/security/lsm` and points at
   `20-lsm/enable-bpf-lsm.sh` otherwise.
@@ -113,4 +120,9 @@ exec syscall at all. A real exec shield pairs this hook with those paths.
   and lets `ls`/`id` run outside it — scope and enforcement both proven. Full
   transcript in [`../28-execshield/logs/verify.txt`](../28-execshield/logs/verify.txt).
   The Docker linuxkit kernel compiles both halves but has no `bpf` in `lsm=`, so
-  the attach only happens on the BPF-LSM host.
+  the attach only happens on the BPF-LSM host. Re-run on 2026-11-25 with the
+  loader line-buffered (`stdbuf -oL`): the `protecting`/`Shield active` lines then
+  print at attach time and the `DENY` event prints during the deny, confirming the
+  original transcript's end-of-file clustering was non-tty stdout block-buffering,
+  not hand assembly. The shell reports the blocked `exec` as exit 126; the kernel
+  cause is `EPERM` and the authoritative proof is the logged `DENY` event.
