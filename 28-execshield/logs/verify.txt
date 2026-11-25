@@ -1,0 +1,30 @@
+verify-execshield.sh — Chapter 28 live run
+
+  host:   Lima VM shirudo-dev (Ubuntu aarch64, vz/nested-KVM)
+  kernel: 7.0.0-38-generic aarch64
+  lsm=:   lockdown,capability,landlock,yama,apparmor,bpf,ima,evm
+  clang:  Ubuntu clang version 23.1.6 (++20261116013916+5b10d2d74929-1~exp1~20261116133927.96)
+  libbpf: 1:1.6.3-1ubuntu1
+  date:   2026-11-25T08:40:34Z
+
+========================================================================
+Active LSMs: lockdown,capability,landlock,yama,apparmor,bpf,ima,evm   (bpf present — good)
+Test cgroup /sys/fs/cgroup/execshield-test holds pid 2142.
+Loading execshield scoped to /sys/fs/cgroup/execshield-test only ...
+
+--- Inside the protected cgroup: exec should be DENIED ---
+verify-execshield.sh: line 63: /bin/true: Operation not permitted
+OK: exec denied inside protected cgroup (as designed)
+
+--- Outside the cgroup: host stays usable ---
+OK: ls ran
+OK: id ran
+
+Detaching ...
+protecting /sys/fs/cgroup/execshield-test (cgroup id 8229)
+
+Shield active: exec is DENIED inside the protected cgroup(s). Ctrl-C to stop.
+PID      VERDICT COMM             PROGRAM
+2145     DENY    bash             /bin/true
+
+Detached — exec allowed again. Bye!
