@@ -72,6 +72,9 @@ cleanup() {
         rc=1                         # make the leak visible in the exit status
     else
         [[ -n "${SLEEP_PID:-}" ]] && kill "$SLEEP_PID" 2>/dev/null || true
+        [[ -n "${CHILD_SLEEP_PID:-}" ]] && kill "$CHILD_SLEEP_PID" 2>/dev/null || true
+        [[ -d "${NCG_CHILD:-}" ]] && rmdir "$NCG_CHILD" 2>/dev/null || true   # child before parent
+        [[ -n "${NCG_PARENT:-}" && -d "$NCG_PARENT" ]] && rmdir "$NCG_PARENT" 2>/dev/null || true
         [[ -d "$CG" ]] && rmdir "$CG" 2>/dev/null || true
     fi
     rm -f "$LOG" 2>/dev/null || true
@@ -86,12 +89,33 @@ SLEEP_PID=$!
 echo "$SLEEP_PID" > "$CG/cgroup.procs"
 echo "Test cgroup $CG holds pid $SLEEP_PID."
 
-echo "Loading execshield scoped to $CG only ..."
+# (b2) A SEPARATE two-level hierarchy for the hierarchical-scope check. cgroup2's
+# no-internal-process rule forbids a cgroup from holding processes AND having
+# children, so the direct-member test ($CG) and the parent-with-child test need
+# distinct trees. We protect NCG_PARENT and later exec in NCG_CHILD, whose own id
+# is never handed to the shield.
+NCG_PARENT=/sys/fs/cgroup/execshield-parent
+NCG_CHILD="$NCG_PARENT/worker"
+NCG_PARENT_ARG=""
+if mkdir -p "$NCG_PARENT" 2>/dev/null \
+   && { echo "+pids" > "$NCG_PARENT/cgroup.subtree_control" 2>/dev/null || true; } \
+   && mkdir "$NCG_CHILD" 2>/dev/null; then
+    sleep 300 & CHILD_SLEEP_PID=$!
+    echo "$CHILD_SLEEP_PID" > "$NCG_CHILD/cgroup.procs"
+    NCG_PARENT_ARG="$NCG_PARENT"
+    echo "Nested test: protecting $NCG_PARENT, will exec in child $NCG_CHILD."
+else
+    NCG_PARENT=""   # signals the nested check to skip
+    echo "note: could not build a nested cgroup hierarchy; nested check will skip." >&2
+fi
+
+echo "Loading execshield scoped to the test cgroup(s) ..."
 echo
 # Capture the loader's stdout (tee so the run is still visible) so the deny test
 # can assert the shield logged a DENY. Line-buffer it or the DENY row may not be
-# flushed to $LOG before we grep it.
-stdbuf -oL ./execshield "$CG" > >(tee "$LOG") 2>&1 &
+# flushed to $LOG before we grep it. Only the leaf $CG and the parent
+# $NCG_PARENT are handed in — never the child, whose deny must come from the walk.
+stdbuf -oL ./execshield "$CG" $NCG_PARENT_ARG > >(tee "$LOG") 2>&1 &
 P=$!
 sleep 1
 
@@ -123,6 +147,37 @@ sleep 0.5    # let the loader flush its DENY row to $LOG
 grep -Eq "^[[:space:]]*${DENY_PID}[[:space:]]+DENY\b" "$LOG" \
     || fail "exec failed with EPERM but the shield logged no DENY for pid $DENY_PID — the EPERM came from something other than this shield."
 echo "OK: exec denied inside protected cgroup — exit 126 (EPERM) AND shield logged DENY for pid $DENY_PID."
+
+echo
+echo "--- Inside a CHILD of a protected cgroup: exec should ALSO be DENIED ---"
+# Scope is hierarchical (issue #6): a service's workers live in child cgroups of
+# the one we protected, so a descendant must be governed too. The shield was
+# scoped to $NCG_PARENT; the child's own id was never added. If the deny reaches
+# a process in the child, the ancestry walk is working — a leaf-only shield would
+# allow this exec. cgroup2's no-internal-process rule means a cgroup cannot both
+# hold processes and have children, so this uses its own pure-inner-node parent,
+# separate from $CG (which holds the direct-member test above).
+if [[ -n "${NCG_PARENT:-}" && -d "$NCG_CHILD" ]]; then
+    CHILD_PID=""
+    set +e
+    CHILD_PID=$(
+        bash -c '
+            echo $$ > "'"$NCG_CHILD"'/cgroup.procs" || exit 70
+            echo $$
+            exec /bin/true
+        '
+    )
+    crc=$?
+    set -e
+    [[ "$crc" == 126 ]] || fail "exec in CHILD cgroup exited $crc, expected 126 — ancestry match failed (issue #6 would be reopened)."
+    [[ -n "$CHILD_PID" ]] || fail "could not move a test child into $NCG_CHILD; nested check inconclusive."
+    sleep 0.5
+    grep -Eq "^[[:space:]]*${CHILD_PID}[[:space:]]+DENY\b" "$LOG" \
+        || fail "child exec failed with EPERM but no DENY logged for pid $CHILD_PID."
+    echo "OK: exec denied in a CHILD of the protected cgroup — the ancestry walk covers descendants."
+else
+    echo "note: nested hierarchy unavailable (cgroup delegation); skipping nested check." >&2
+fi
 
 echo
 echo "--- Outside the cgroup: host stays usable (exec must SUCCEED) ---"

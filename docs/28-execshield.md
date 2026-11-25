@@ -103,13 +103,18 @@ exec syscall at all. A real exec shield pairs this hook with those paths.
   service's allowed behaviour, or who exploits the kernel below the LSM layer, is
   not stopped. This contains the exploitation technique; it does not prevent the
   bug.
-- **Scope is per-cgroup-id, not hierarchical.** `bpf_get_current_cgroup_id()`
-  returns the task's *own* cgroup, so a child or delegated sub-cgroup of a
-  protected one has a different id and is **not** covered — a worker the nginx
-  master spawns in `.../nginx.service/<child>` would exec freely. The shipped
-  primitive covers exactly the leaf cgroups you enumerate; protecting a service
-  with sub-cgroups means listing each one, or walking cgroup ancestry in the BPF
-  program. Tracked as [issue #6](https://github.com/douglasmun/ebpf101/issues/6).
+- **Scope is hierarchical — descendants are covered.** A service puts its workers
+  in child cgroups of its own (systemd delegation, an nginx master spawning
+  workers under `nginx.service/<child>`), and those children have different cgroup
+  ids. Matching only the task's own (leaf) id would let them exec freely — the
+  shield would miss exactly the processes it is meant to contain. So the program
+  matches the leaf **and every ancestor** up to the root against the set
+  (`bpf_get_current_ancestor_cgroup_id` in a bounded walk): protecting a service's
+  cgroup covers its whole subtree. Proven in `verify-execshield.sh`, which protects
+  a parent and confirms an exec in an unenrolled child is still denied. This closed
+  [issue #6](https://github.com/douglasmun/ebpf101/issues/6); the earlier shipped
+  version matched the leaf id only. The walk is capped at 16 levels — deeper than
+  any real layout, and a directly protected cgroup is always caught regardless.
 - **Needs BPF-LSM.** `bpf` must be in the kernel `lsm=` parameter, the same ch20
   wall; the loader checks `/sys/kernel/security/lsm` and points at
   `20-lsm/enable-bpf-lsm.sh` otherwise.

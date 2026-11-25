@@ -1,30 +1,32 @@
-verify-execshield.sh — Chapter 28 live run
+# Chapter 28 verify run — 2026-11-25T09:54:04Z
+# host: lima-shirudo-dev  kernel: 7.0.0-38-generic aarch64
+# lsm=lockdown,capability,landlock,yama,apparmor,bpf,ima,evm
+# clang: Ubuntu clang version 23.1.6 (++20261116013916+5b10d2d74929-1~exp1~20261116133927.96)
 
-  host:   Lima VM shirudo-dev (Ubuntu aarch64, vz/nested-KVM)
-  kernel: 7.0.0-38-generic aarch64
-  lsm=:   lockdown,capability,landlock,yama,apparmor,bpf,ima,evm
-  clang:  Ubuntu clang version 23.1.6 (++20261116013916+5b10d2d74929-1~exp1~20261116133927.96)
-  libbpf: 1:1.6.3-1ubuntu1
-  date:   2026-11-25T08:40:34Z
-
-========================================================================
 Active LSMs: lockdown,capability,landlock,yama,apparmor,bpf,ima,evm   (bpf present — good)
-Test cgroup /sys/fs/cgroup/execshield-test holds pid 2142.
-Loading execshield scoped to /sys/fs/cgroup/execshield-test only ...
+Test cgroup /sys/fs/cgroup/execshield-test holds pid 2742.
+Nested test: protecting /sys/fs/cgroup/execshield-parent, will exec in child /sys/fs/cgroup/execshield-parent/worker.
+Loading execshield scoped to the test cgroup(s) ...
 
---- Inside the protected cgroup: exec should be DENIED ---
-verify-execshield.sh: line 63: /bin/true: Operation not permitted
-OK: exec denied inside protected cgroup (as designed)
-
---- Outside the cgroup: host stays usable ---
-OK: ls ran
-OK: id ran
-
-Detaching ...
-protecting /sys/fs/cgroup/execshield-test (cgroup id 8229)
+protecting /sys/fs/cgroup/execshield-test (cgroup id 8959)
+protecting /sys/fs/cgroup/execshield-parent (cgroup id 9021)
 
 Shield active: exec is DENIED inside the protected cgroup(s). Ctrl-C to stop.
 PID      VERDICT COMM             PROGRAM
-2145     DENY    bash             /bin/true
+--- Inside the protected cgroup: exec should be DENIED by the shield ---
+bash: line 4: /bin/true: Operation not permitted
+2749     DENY    bash             /bin/true
+OK: exec denied inside protected cgroup — exit 126 (EPERM) AND shield logged DENY for pid 2749.
+
+--- Inside a CHILD of a protected cgroup: exec should ALSO be DENIED ---
+bash: line 4: /bin/true: Operation not permitted
+2752     DENY    bash             /bin/true
+OK: exec denied in a CHILD of the protected cgroup — the ancestry walk covers descendants.
+
+--- Outside the cgroup: host stays usable (exec must SUCCEED) ---
+OK: ls ran outside the cgroup.
+OK: id ran outside the cgroup.
+
+Detaching (cleanup confirms the enforcing program is gone before exit) ...
 
 Detached — exec allowed again. Bye!
